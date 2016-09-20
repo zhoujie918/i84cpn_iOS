@@ -1,0 +1,342 @@
+//
+//  CPHomePageView.swift
+//  i84cpn
+//
+//  Created by 周杰 on 16/5/24.
+//  Copyright © 2016年 5i84. All rights reserved.
+//  主页
+
+import UIKit
+
+protocol homeDelegate:NSObjectProtocol {
+    func sendDic(schoolAddress:String,grade:String,rang:Int,departType:Int)
+}
+
+typealias sendClickClosure=()->Void
+
+class CPHomePageView: UIView,ZHDropDownMenuDelegate {
+    
+    
+    private var scrollView=UIScrollView()
+    private var contentView=UIView()
+    private var searchPageView=CPAddressSearchView()
+    
+    private var busAdView=UIImageView()  //广告
+    private var busLocation=UIView()     //定位
+    private var busLine=UIView()         //线路
+    
+    private var locImg1=UIImageView()   //定位图1
+    private var locImg2=UIImageView()   //定位图2
+    private var cutLine=UIView()        //定位的分割线
+    
+    private var schoolLabel=UILabel()           //学校label
+    private var gradeLabel=UILabel()            //年级label
+    
+    private var doubleTripBtn=UIButton()        //双程Btn
+    private var singleTripBtn=UIButton()        //单程Btn
+    var singleTrip:Int!
+    private var doubleTripLabel=UILabel()
+    private var singleTripLabel=UILabel()
+    
+    var switchButton=Switcher()  //开关按钮
+    var switchGest=UITapGestureRecognizer()
+    private var fromToAddressBtn=UIButton()         //出发地／目的地
+    private var addressTextFil=UITextField()        //地址关键字
+    
+    var schoolDropDown:ZHDropDownMenu!      //下拉框
+    var gradeDropDown:ZHDropDownMenu!        //下拉框
+    var schoolValue:String!
+    var gradeValue:String!
+    
+    var myClosure : sendClickClosure?
+    weak var delegate:homeDelegate?
+    
+    var addressGest=UITapGestureRecognizer()
+    
+    // Only override drawRect: if you perform custom drawing.
+    // An empty implementation adversely affects performance during animation.
+    override func drawRect(rect: CGRect) {
+        singleTrip=0
+//        singleTrip=0
+        //---------scrollView----------
+        self.addSubview(scrollView)
+        scrollView.bounces=false
+        scrollView.backgroundColor=COLOR_BACKGROUND_GRAY
+        scrollView.snp_makeConstraints { (make) in
+            make.edges.equalTo(self).offset(UIEdgeInsetsZero)
+        }
+        
+        //----------contentView----------
+        scrollView.addSubview(contentView)
+        contentView.backgroundColor=COLOR_BACKGROUND_GRAY
+        
+        //-------------------------------
+        //busAdView
+        contentView.addSubview(busAdView)
+        busAdView.contentMode=UIViewContentMode.ScaleAspectFill
+        busAdView.image=UIImage(named: "img_ad")
+        busAdView.snp_makeConstraints { (make) in
+            make.top.equalTo(contentView).offset(0)
+            make.left.equalTo(contentView).offset(0)
+            make.right.equalTo(contentView).offset(0)
+//            make.height.equalTo(186)
+        }
+        
+        
+        //----------------busLocation--------------
+        contentView.addSubview(busLocation)
+        busLocation.layer.borderWidth=1
+        busLocation.layer.borderColor=COLOR_SEGMENTATION.CGColor
+        busLocation.backgroundColor=UIColor.whiteColor()
+        busLocation.snp_makeConstraints { (make) in
+            make.top.equalTo(busAdView.snp_bottom).offset(HEIGHT_DYNAMIC(10))
+            make.left.equalTo(contentView).offset(0)
+//            make.height.equalTo(50)
+            make.right.equalTo(contentView).offset(0)
+        }
+        
+        //locImg1
+        busLocation.addSubview(locImg1)
+        locImg1.image=UIImage(named: "img_01")
+        locImg1.userInteractionEnabled = true
+        let img1Tap = UITapGestureRecognizer.init(target: self, action: #selector(CPHomePageView.realTimeCar))
+        locImg1.addGestureRecognizer(img1Tap)
+        locImg1.snp_makeConstraints { (make) in
+            make.top.equalTo(busLocation).offset(HEIGHT_DYNAMIC(10))
+            make.left.equalTo(busLocation).offset(WIDTH_DYNAMIC(30))
+        }
+        
+        //locImg2
+        busLocation.addSubview(locImg2)
+        locImg2.image=UIImage(named: "img_02")
+        locImg2.snp_makeConstraints { (make) in
+            make.top.equalTo(busLocation).offset(HEIGHT_DYNAMIC(10))
+            make.right.equalTo(busLocation).offset(WIDTH_DYNAMIC(-30))
+        }
+        
+        //cutLine
+        busLocation.addSubview(cutLine)
+        cutLine.backgroundColor=COLOR_MAIN
+        cutLine.layer.cornerRadius=2
+        cutLine.snp_makeConstraints { (make) in
+            make.top.equalTo(busLocation).offset(10)
+            make.width.equalTo(3)
+            make.height.equalTo(30)
+            make.centerX.equalTo(busLocation)
+        }
+        busLocation.snp_updateConstraints { (make) in
+            make.bottom.equalTo(cutLine.snp_bottom).offset(HEIGHT_DYNAMIC(10))
+        }
+        
+        //-----------------busLine----------------
+        contentView.addSubview(busLine)
+        busLine.backgroundColor=UIColor.whiteColor()
+        busLine.snp_makeConstraints { (make) in
+            make.top.equalTo(busLocation.snp_bottom).offset(HEIGHT_DYNAMIC(10))
+            make.left.equalTo(contentView).offset(0)
+            make.right.equalTo(contentView).offset(0)
+        }
+        
+        //School
+        busLine.addSubview(schoolLabel)
+        schoolLabel.text="学    校"
+        schoolLabel.font=UIFont.systemFontOfSize(14)
+        schoolLabel.snp_makeConstraints { (make) in
+            make.top.equalTo(busLine).offset((23))
+            make.left.equalTo(busLine).offset(WIDTH_DYNAMIC(32))
+        }
+        
+        
+        //schoolDropDown
+        schoolDropDown=ZHDropDownMenu()
+        schoolDropDown.dropMenuTag=1
+        schoolDropDown.options=[""]
+        schoolDropDown.defaultValue=""
+        schoolDropDown.buttonImage=UIImage(named: "icon_down")
+        schoolDropDown.editable=false
+        schoolDropDown.delegate=self
+        schoolDropDown.layer.borderWidth=1
+        schoolDropDown.layer.borderColor=UIColor(red: 227/255, green: 227/255, blue: 227/255, alpha: 1).CGColor
+        schoolDropDown.layer.cornerRadius=3
+        schoolDropDown.font=UIFont.boldSystemFontOfSize(14)
+        schoolDropDown.textColor=UIColor.grayColor()
+        contentView.addSubview(schoolDropDown)
+        schoolDropDown.snp_makeConstraints { (make) in
+            make.top.equalTo(busLine).offset(WIDTH_DYNAMIC(16))
+            make.left.equalTo(schoolLabel.snp_right).offset(WIDTH_DYNAMIC(16))
+            make.right.equalTo(busLine).offset(WIDTH_DYNAMIC(-28))
+            make.height.equalTo(34)
+        }
+        
+        //GradeLabel
+        gradeLabel.text="年    级"
+        gradeLabel.font=UIFont.systemFontOfSize(14)
+        busLine.addSubview(gradeLabel)
+        gradeLabel.snp_makeConstraints { (make) in
+            make.top.equalTo(schoolLabel.snp_bottom).offset((31))
+            make.left.equalTo(busLine).offset(WIDTH_DYNAMIC(32))
+        }
+        
+        //gradeDropDown
+        gradeDropDown=ZHDropDownMenu()
+        gradeDropDown.dropMenuTag=2
+        gradeDropDown.options=[""]
+        gradeDropDown.defaultValue=""
+        gradeDropDown.buttonImage=UIImage(named: "icon_down")
+        gradeDropDown.editable=false
+        gradeDropDown.delegate=self
+        gradeDropDown.layer.borderWidth=1
+        gradeDropDown.layer.cornerRadius=3
+        gradeDropDown.layer.borderColor=UIColor(red: 227/255, green: 227/255, blue: 227/255, alpha: 1).CGColor
+        gradeDropDown.font=UIFont.boldSystemFontOfSize(14)
+        gradeDropDown.textColor=UIColor.grayColor()
+        contentView.addSubview(gradeDropDown)
+        gradeDropDown.snp_makeConstraints { (make) in
+            make.top.equalTo(schoolDropDown.snp_bottom).offset(WIDTH_DYNAMIC(16))
+            make.left.equalTo(schoolLabel.snp_right).offset(WIDTH_DYNAMIC(16))
+            make.right.equalTo(busLine).offset(WIDTH_DYNAMIC(-28))
+            make.height.equalTo(34)
+        }
+        
+        //单双程按钮
+        busLine.addSubview(doubleTripBtn)
+        doubleTripBtn.selected=true
+        doubleTripBtn.setImage(UIImage(named: "icon_sel"), forState: UIControlState.Selected)
+        doubleTripBtn.setImage(UIImage(named: "icon_unsel"), forState: UIControlState.Normal)
+        doubleTripBtn.addTarget(self, action: #selector(self.doubleTripBtnClick), forControlEvents: UIControlEvents.TouchUpInside)
+        doubleTripBtn.snp_makeConstraints { (make) in
+            make.top.equalTo(gradeDropDown.snp_bottom).offset(HEIGHT_DYNAMIC(12))
+            make.left.equalTo(schoolDropDown.snp_left).offset(WIDTH_DYNAMIC(12))
+        }
+        
+        busLine.addSubview(doubleTripLabel)
+        doubleTripLabel.font=UIFont.systemFontOfSize(12)
+        doubleTripLabel.text="往返程"
+        doubleTripLabel.snp_makeConstraints { (make) in
+            make.top.equalTo(gradeDropDown.snp_bottom).offset(HEIGHT_DYNAMIC(15))
+            make.left.equalTo(doubleTripBtn.snp_right).offset(WIDTH_DYNAMIC(8))
+        }
+
+        busLine.addSubview(singleTripBtn)
+        singleTripBtn.selected=false
+        singleTripBtn.setImage(UIImage(named: "icon_unsel"), forState: UIControlState.Normal)
+        singleTripBtn.setImage(UIImage(named: "icon_sel"), forState: UIControlState.Selected)
+        singleTripBtn.addTarget(self, action: #selector(self.singleTripBtnClick), forControlEvents: UIControlEvents.TouchUpInside)
+        singleTripBtn.snp_makeConstraints { (make) in
+            make.top.equalTo(gradeDropDown.snp_bottom).offset(HEIGHT_DYNAMIC(12))
+            make.left.equalTo(doubleTripLabel.snp_right).offset(WIDTH_DYNAMIC(32))
+        }
+        
+        
+        busLine.addSubview(singleTripLabel)
+        singleTripLabel.font=UIFont.systemFontOfSize(12)
+        singleTripLabel.text="单程"
+        singleTripLabel.snp_makeConstraints { (make) in
+            make.top.equalTo(gradeDropDown.snp_bottom).offset(HEIGHT_DYNAMIC(15))
+            make.left.equalTo(singleTripBtn.snp_right).offset(WIDTH_DYNAMIC(8))
+        }
+        
+        //开关按钮
+        busLine.addSubview(switchButton)
+        switchButton.backgroundColor=UIColor.whiteColor()
+        switchButton.frame.size=CGSizeMake(80, 28)
+        switchButton.snp_makeConstraints { (make) in
+            make.top.equalTo(singleTripBtn.snp_bottom).offset(HEIGHT_DYNAMIC(15))
+            make.left.equalTo(busLine).offset(WIDTH_DYNAMIC(30))
+            make.width.equalTo(80)
+            make.height.equalTo(28)
+        }
+        
+        //addressTextFil
+        busLine.addSubview(addressTextFil)
+        addressTextFil.leftView=UIView(frame: CGRectMake(0,0,10,34))
+        addressTextFil.leftViewMode=UITextFieldViewMode.Always
+        addressTextFil.placeholder="请输入关键字"
+        addressTextFil.enabled=true
+        addressTextFil.layer.borderWidth=1
+        addressTextFil.layer.cornerRadius=3
+        addressTextFil.layer.borderColor=UIColor(red: 227/255, green: 227/255, blue: 227/255, alpha: 1).CGColor
+        addressTextFil.font=UIFont.boldSystemFontOfSize(12)
+        addressTextFil.clearButtonMode=UITextFieldViewMode.WhileEditing
+        addressTextFil.snp_makeConstraints { (make) in
+            make.top.equalTo(singleTripBtn.snp_bottom).offset(HEIGHT_DYNAMIC(12))
+            make.left.equalTo(switchButton.snp_right).offset(WIDTH_DYNAMIC(16))
+            make.right.equalTo(busLine).offset(WIDTH_DYNAMIC(-28))
+            make.height.equalTo(34)
+        }
+//        addressGest.addTarget(self, action: #selector(self.chooseAddress))
+        addressGest.numberOfTapsRequired=1
+        addressTextFil.addGestureRecognizer(addressGest)
+        
+        busLine.snp_updateConstraints { (make) in
+            make.bottom.equalTo(addressTextFil.snp_bottom).offset(HEIGHT_DYNAMIC(10))
+        }
+        
+        //---------contentView_bottom------------
+        contentView.snp_updateConstraints { (make) in
+            make.edges.equalTo(scrollView).offset(UIEdgeInsetsZero)
+            make.width.equalTo(self.bounds.size.width)
+            make.bottom.equalTo(busLine.snp_bottom).offset(30)
+            
+        }
+        
+    }
+    
+    //MARK: 实时专车
+    func initWithClosure(closure:sendClickClosure?){
+        myClosure = closure
+    }
+    
+    func realTimeCar(){
+        if (myClosure != nil){
+            myClosure!()
+        }
+    }
+
+    func doubleTripBtnClick(){
+        doubleTripBtn.selected = true
+        singleTripBtn.selected = false
+        singleTrip=0
+    }
+    func singleTripBtnClick(){
+        doubleTripBtn.selected = false
+        singleTripBtn.selected = true
+        singleTrip=1
+    }
+    
+    //选择完后回调
+    func dropDownMenu(menu: ZHDropDownMenu!, didChoose index: Int,dropMenuTag:Int) {
+//                print("\(menu) choosed at index \(index)")
+        if dropMenuTag==1 {
+            schoolValue=schoolDropDown.options[index] as! String
+
+        }else if(dropMenuTag==2){
+            var num:String!
+            switch index {
+            case 0: num="1";
+            case 1: num="2";
+            case 2: num="3";
+            case 3: num="4";
+            case 4: num="5";
+            case 5: num="6";
+            case 6: num="7";
+            case 7: num="8";
+            case 8: num="9";
+            case 9: num="a";
+            case 10: num="b";
+            case 11: num="c";
+            default: num="1"
+            }
+            gradeValue=num
+        }
+
+    }
+
+    
+    //编辑完成后回调
+    func dropDownMenu(menu: ZHDropDownMenu!, didInput text: String!) {
+        //        print("\(menu) input text \(text)")
+    }
+
+    
+}

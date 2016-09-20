@@ -1,0 +1,333 @@
+		//
+//  CPLineSearchResultModel.swift
+//  i84cpn
+//
+//  Created by 周杰 on 16/5/10.
+//  Copyright © 2016年 5i84. All rights reserved.
+//
+/*
+ 注：
+ NSMutableArray
+ NSMutableSet
+ NSMutableDictionary
+ 这些集合类只能收集cocoa对象（NSOjbect对象），如果想保存一些原始的C数据（例如，int, float, double, BOOL等），则需要将这些原始的C数据封装成NSNumber类型的，NSNumber对象是cocoa对象，可以被保存在集合类中
+ */
+import UIKit
+
+class CPLineSearchResultModel: NSObject {
+    //    typealias callBackFun=(success:NSMutableArray)->()
+    typealias callBackFun=(resultList:NSArray)->()
+    
+    //单程
+    typealias callBackFun2=(lineNameArray:NSMutableArray,gradeArray:NSMutableArray,stationNameArray:NSMutableArray,priceArray:NSMutableArray,resultListCount:Int,issueIdArray:NSMutableArray,classesIdArray:NSMutableArray,lineIdArray:NSMutableArray,resultData:NSDictionary)->()
+    
+    //往返
+    typealias callBackFun3=(lineNameArray:NSMutableArray,lineNameArrayBack:NSMutableArray,gradeArray:NSMutableArray,stationNameArray:NSMutableArray,priceArray:NSMutableArray,priceArrayBack:NSMutableArray,resultListCount:Int,issueIdArray:NSMutableArray,classesIdArray:NSMutableArray,lineIdArray:NSMutableArray,issueIdArrayBack:NSMutableArray,classesIdArrayBack:NSMutableArray,lineIdArrayBack:NSMutableArray,resultData:NSDictionary)->()
+    
+    var isSolicit:NSNumber!           //是否招募中，1是
+    var classesId:Int!
+    var lineId:Int!
+    var issueId:AnyObject!
+    var issueName:String!
+    var ticketType:NSNumber!
+    var price:String!               //价格
+    var lineName:String!            //线路名称
+    var grade:String!               //推荐年级
+    var seatNum:NSNumber!
+    var stationName:String!         //途径站点
+    var antipateMileage:String!
+    var antipateTime:NSNumber!
+    var openWay:NSNumber!
+    var categoryName:String!        //寄宿生专线
+    
+    var lineNameArray=NSMutableArray()
+    var gradeArray=NSMutableArray()
+    var stationNameArray=NSMutableArray()
+    var priceArray=NSMutableArray()
+    var issueIdArray=NSMutableArray()
+    var classesIdArray=NSMutableArray()
+    var lineIdArray=NSMutableArray()
+    
+    var emptyArray=NSMutableArray()
+    
+    //学校
+    var lineNameArray2=NSMutableArray()
+    var priceArray2=NSMutableArray()
+    var issueIdArray2=NSMutableArray()
+    var classesIdArray2=NSMutableArray()
+    var lineIdArray2=NSMutableArray()
+    
+    override func setValue(value: AnyObject?, forUndefinedKey key: String) {
+        
+    }
+    
+    //推荐线路，单程
+    func recommadLineDataLoad(postURL:String,para:NSMutableDictionary,closure:callBackFun2){
+        CPAFHTTPSessionManager.postWithUrlString(postURL, parameter: para as [NSObject : AnyObject], progressBlock: nil, successBlock: { (responseData) in
+//            print("推荐线路，单程",responseData)
+//            print(para)
+            if(responseData.objectForKey("success") as! Bool){
+                if((responseData.objectForKey("result"))?.objectForKey("success") as! Bool){
+                    let resultList=responseData.objectForKey("result")!.objectForKey("result")!.objectForKey("lineList")!
+//                    print(resultList)
+                    self.lineNameArray.removeAllObjects()
+                    self.gradeArray.removeAllObjects()
+                    self.stationNameArray.removeAllObjects()
+                    self.priceArray.removeAllObjects()
+                    self.issueIdArray.removeAllObjects()
+                    self.classesIdArray.removeAllObjects()
+                    self.lineIdArray.removeAllObjects()
+                    
+                    for i in 0..<resultList.count {
+                        
+                        self.setValuesForKeysWithDictionary((resultList as! NSArray)[i] as! [String : AnyObject])
+                        self.lineNameArray.addObject(self.lineName)
+                        self.gradeArray.addObject(self.grade)
+                        self.stationNameArray.addObject(self.categoryName)
+                        self.priceArray.addObject(self.price)
+                        
+                        let rec_issueId=((resultList as! NSArray)[i] as! NSDictionary).objectForKey("issueId")!
+                        let rec_classesId=((resultList as! NSArray)[i] as! NSDictionary).objectForKey("classesId")!
+                        let rec_lineId=((resultList as! NSArray)[i] as! NSDictionary).objectForKey("lineId")!
+                        
+                        self.issueIdArray.addObject(rec_issueId)
+                        self.classesIdArray.addObject(rec_classesId)
+                        self.lineIdArray.addObject(rec_lineId)
+                        
+                    }
+                    closure(lineNameArray: self.lineNameArray, gradeArray: self.gradeArray, stationNameArray: self.stationNameArray, priceArray: self.priceArray, resultListCount: resultList.count, issueIdArray: self.issueIdArray, classesIdArray: self.classesIdArray, lineIdArray: self.lineIdArray,resultData:responseData as! NSDictionary)
+                }
+                    
+                else{
+                    print("单程推荐线路结果:",responseData)
+                    let msg=(responseData.objectForKey("result"))!.objectForKey("msg") as! String
+                    let alertView=UIAlertView(title: "提示", message: msg, delegate: self, cancelButtonTitle: "确定")
+                    alertView.show()
+                }
+            }else{
+                print("单程推荐线路结果:",responseData)
+                let msg=responseData.objectForKey("msg") as! String
+                let alertView=UIAlertView(title: "提示", message: msg, delegate: self, cancelButtonTitle: "确定")
+                alertView.show()
+            }
+        }) { (error) in
+            print(error)
+        }
+    }
+    
+    
+    //学校线路，单程
+    func schoolLineDataLoad(postURL:String,para:NSMutableDictionary,closure:callBackFun2){
+        CPAFHTTPSessionManager.postWithUrlString(postURL, parameter: para as [NSObject : AnyObject], progressBlock: nil, successBlock: { (responseData) in
+//            print("学校线路，单程",para)
+//                        print("单程学校线路结果:",responseData)
+            if(responseData.objectForKey("success") as! Bool){
+                if((responseData.objectForKey("result"))?.objectForKey("success") as! Bool){
+                    let resultList=responseData.objectForKey("result")!.objectForKey("result")!.objectForKey("lineList")!
+                    self.lineNameArray.removeAllObjects()
+                    self.gradeArray.removeAllObjects()
+                    self.stationNameArray.removeAllObjects()
+                    self.priceArray.removeAllObjects()
+                    self.issueIdArray.removeAllObjects()
+                    self.classesIdArray.removeAllObjects()
+                    self.lineIdArray.removeAllObjects()
+                    
+                    for i in 0..<resultList.count {
+                        
+                        self.setValuesForKeysWithDictionary((resultList as! NSArray)[i] as! [String : AnyObject])
+                        self.lineNameArray.addObject(self.lineName)
+                        self.gradeArray.addObject(self.grade)
+                        self.stationNameArray.addObject(self.categoryName)
+                        self.priceArray.addObject(self.price)
+                        
+                        var rec_issueId=((resultList as! NSArray)[i] as! NSDictionary).objectForKey("issueId")!
+                        var rec_classesId=((resultList as! NSArray)[i] as! NSDictionary).objectForKey("classesId")!
+                        var rec_lineId=((resultList as! NSArray)[i] as! NSDictionary).objectForKey("lineId")!
+                        
+                        self.issueIdArray.addObject(rec_issueId)
+                        self.classesIdArray.addObject(rec_classesId)
+                        self.lineIdArray.addObject(rec_lineId)
+                        
+                        //                    print(resultList[i])
+                    }
+                    closure(lineNameArray: self.lineNameArray, gradeArray: self.gradeArray, stationNameArray: self.stationNameArray, priceArray: self.priceArray, resultListCount: resultList.count, issueIdArray: self.issueIdArray, classesIdArray: self.classesIdArray, lineIdArray: self.lineIdArray,resultData:responseData as! NSDictionary)
+                }
+                else{
+                    print("单程学校线路结果:",responseData)
+                    let msg=(responseData.objectForKey("result"))!.objectForKey("msg") as! String
+                    let alertView=UIAlertView(title: "提示", message: msg, delegate: self, cancelButtonTitle: "确定")
+                    alertView.show()
+                }
+            }else{
+                print("单程学校线路结果:",responseData)
+                let msg=responseData.objectForKey("msg") as! String
+                let alertView=UIAlertView(title: "提示", message: msg, delegate: self, cancelButtonTitle: "确定")
+                alertView.show()
+            }
+            
+        }) { (error) in
+            print(error)
+        }
+    }
+    
+    //推荐线路，双程
+    func recommandLineDataLoad2(postURL:String,para:NSMutableDictionary,closure:callBackFun3){
+        CPAFHTTPSessionManager.postWithUrlString(postURL, parameter: para as [NSObject : AnyObject], progressBlock: nil
+            , successBlock: { (responseData) in
+//                print("推荐线路，双程",responseData)
+//                print(para)
+                if(responseData.objectForKey("success") as! Bool){
+                    if (responseData.objectForKey("result")?.count > 0) {
+//                        print("双程推荐线路结果:",responseData)
+                        if(responseData.objectForKey("result")?.objectForKey("success") as! Bool){
+                            if(responseData.objectForKey("result")?.objectForKey("result")?.objectForKey("lineList")?.count>0){
+                                let resultList=responseData.objectForKey("result")!.objectForKey("result")!.objectForKey("lineList")!
+                                self.lineNameArray.removeAllObjects()
+                                self.gradeArray.removeAllObjects()
+                                self.stationNameArray.removeAllObjects()
+                                self.priceArray.removeAllObjects()
+                                self.issueIdArray.removeAllObjects()
+                                self.classesIdArray.removeAllObjects()
+                                self.lineIdArray.removeAllObjects()
+                                
+                                self.lineNameArray2.removeAllObjects()
+                                self.priceArray2.removeAllObjects()
+                                self.issueIdArray2.removeAllObjects()
+                                self.classesIdArray2.removeAllObjects()
+                                self.lineIdArray2.removeAllObjects()
+                                for i in 0..<resultList.count {
+                                    
+                                    let resultDic=(resultList as! NSArray)[i] as! NSDictionary
+                                    let resultDicKeyW=resultDic.objectForKey("w")
+                                    let WLineName=resultDicKeyW?.objectForKey("lineName")!
+                                    let WGrade=resultDicKeyW?.objectForKey("grade")!
+                                    let WStation=resultDicKeyW?.objectForKey("categoryName")!
+                                    let WSPrice=String(resultDicKeyW!.objectForKey("price")!)
+                                    let WclassesId=resultDicKeyW?.objectForKey("classesId")
+                                    let WlineId=resultDicKeyW?.objectForKey("lineId")
+                                    let WissueId=resultDicKeyW?.objectForKey("issueId")
+                                    
+                                    let resultDicKeyF=resultDic.objectForKey("f")
+                                    let FLineName=resultDicKeyF?.objectForKey("lineName")!
+                                    let FSPrice=String(resultDicKeyF!.objectForKey("price")!)
+                                    let FclassesId=resultDicKeyF?.objectForKey("classesId")
+                                    let FlineId=resultDicKeyF?.objectForKey("lineId")
+                                    let FissueId=resultDicKeyF?.objectForKey("issueId")
+                                    
+                                    self.lineNameArray.addObject(WLineName!)
+                                    self.gradeArray.addObject(WGrade!)
+                                    self.stationNameArray.addObject(WStation!)
+                                    self.priceArray.addObject(WSPrice)
+                                    self.lineNameArray2.addObject(FLineName!)
+                                    self.priceArray2.addObject(FSPrice)
+                                    self.issueIdArray.addObject(WissueId!)
+                                    self.classesIdArray.addObject(WclassesId!)
+                                    self.lineIdArray.addObject(WlineId!)
+                                    
+                                    self.issueIdArray2.addObject(FissueId!)
+                                    self.classesIdArray2.addObject(FclassesId!)
+                                    self.lineIdArray2.addObject(FlineId!)
+                                    
+                                }
+                                closure(lineNameArray: self.lineNameArray, lineNameArrayBack: self.lineNameArray2, gradeArray: self.gradeArray, stationNameArray: self.stationNameArray, priceArray: self.priceArray, priceArrayBack: self.priceArray2, resultListCount: resultList.count, issueIdArray: self.issueIdArray, classesIdArray: self.classesIdArray, lineIdArray: self.lineIdArray,issueIdArrayBack: self.issueIdArray2, classesIdArrayBack: self.classesIdArray2, lineIdArrayBack: self.lineIdArray2,resultData:responseData as! NSDictionary)
+                            }
+                            
+                        }
+
+                    }else{
+                        print("双程推荐线路结果:",responseData)
+//                        closure(lineNameArray: self.emptyArray, lineNameArrayBack: self.emptyArray, gradeArray: self.emptyArray, stationNameArray: self.emptyArray, priceArray: self.emptyArray, priceArrayBack: self.emptyArray, resultListCount: 0, issueIdArray: self.emptyArray, classesIdArray: self.emptyArray, lineIdArray: self.emptyArray, issueIdArrayBack: self.emptyArray, classesIdArrayBack: self.emptyArray, lineIdArrayBack: self.emptyArray,resultData:responseData as! NSDictionary)
+                    }
+                }
+                else{
+                    print("双程推荐线路结果:",responseData)
+                    let msg=(responseData.objectForKey("msg")) as! String
+                    let alertView=UIAlertView(title: "提示", message: msg, delegate: self, cancelButtonTitle: "确定")
+                    alertView.show()
+                }
+        }) { (error) in
+            print(error)
+        }
+    }
+    //学校线路，双程
+    func schoolLineDataLoad2(postURL:String,para:NSMutableDictionary,closure:callBackFun3){
+        CPAFHTTPSessionManager.postWithUrlString(postURL, parameter: para as [NSObject : AnyObject], progressBlock: nil
+            , successBlock: { (responseData) in
+//                print("双程学校线路结果：",responseData)
+                if(responseData.objectForKey("success") as! Bool){
+                    if(responseData.objectForKey("result")?.count != nil){
+                        if(responseData.objectForKey("result")?.objectForKey("success") as! Bool){
+                            let resultList=responseData.objectForKey("result")!.objectForKey("result")!.objectForKey("lineList")!
+                            //                print("resultList.count:",resultList.count)
+                            self.lineNameArray.removeAllObjects()
+                            self.gradeArray.removeAllObjects()
+                            self.stationNameArray.removeAllObjects()
+                            self.priceArray.removeAllObjects()
+                            self.issueIdArray.removeAllObjects()
+                            self.classesIdArray.removeAllObjects()
+                            self.lineIdArray.removeAllObjects()
+                            
+                            self.lineNameArray2.removeAllObjects()
+                            self.priceArray2.removeAllObjects()
+                            self.issueIdArray2.removeAllObjects()
+                            self.classesIdArray2.removeAllObjects()
+                            self.lineIdArray2.removeAllObjects()
+                            for i in 0..<resultList.count {
+                                
+                                let resultDic=(resultList as! NSArray)[i] as! NSDictionary
+                                //                    print(resultDic)
+                                let resultDicKeyW=resultDic.objectForKey("w")
+                                let WLineName=resultDicKeyW?.objectForKey("lineName")!
+                                let WGrade=resultDicKeyW?.objectForKey("grade")!
+                                let WStation=resultDicKeyW?.objectForKey("categoryName")!
+                                let WSPrice=String(resultDicKeyW!.objectForKey("price")!)
+                                
+                                let resultDicKeyF=resultDic.objectForKey("f")
+                                let FLineName=resultDicKeyF?.objectForKey("lineName")!
+                                let FSPrice=String(resultDicKeyF!.objectForKey("price")!)
+                                
+                                let WclassesId=resultDicKeyW?.objectForKey("classesId")
+                                let WlineId=resultDicKeyW?.objectForKey("lineId")
+                                let WissueId=resultDicKeyW?.objectForKey("issueId")
+                                let FclassesId=resultDicKeyF?.objectForKey("classesId")
+                                let FlineId=resultDicKeyF?.objectForKey("lineId")
+                                let FissueId=resultDicKeyF?.objectForKey("issueId")
+                                //                    print(FclassesId)
+                                self.lineNameArray.addObject(WLineName!)
+                                self.gradeArray.addObject(WGrade!)
+                                self.stationNameArray.addObject(WStation!)
+                                self.priceArray.addObject(WSPrice)
+                                self.lineNameArray2.addObject(FLineName!)
+                                self.priceArray2.addObject(FSPrice)
+                                self.issueIdArray.addObject(WissueId!)
+                                self.classesIdArray.addObject(WclassesId!)
+                                self.lineIdArray.addObject(WlineId!)
+                                
+                                self.issueIdArray2.addObject(FissueId!)
+                                self.classesIdArray2.addObject(FclassesId!)
+                                self.lineIdArray2.addObject(FlineId!)
+                                
+                            }
+                            closure(lineNameArray: self.lineNameArray, lineNameArrayBack: self.lineNameArray2, gradeArray: self.gradeArray, stationNameArray: self.stationNameArray, priceArray: self.priceArray, priceArrayBack: self.priceArray2, resultListCount: resultList.count, issueIdArray: self.issueIdArray, classesIdArray: self.classesIdArray, lineIdArray: self.lineIdArray,issueIdArrayBack: self.issueIdArray2, classesIdArrayBack: self.classesIdArray2, lineIdArrayBack: self.lineIdArray2,resultData:responseData as! NSDictionary)
+                        }
+//                        print(responseData)
+                        
+                    }else{
+                        print("双程学校线路结果:",responseData)
+//                        let msg=responseData.objectForKey("result")!.objectForKey("msg") as! String
+//                        let alertView=UIAlertView(title: "提示", message: msg, delegate: self, cancelButtonTitle: "确定")
+//                        alertView.show()
+                    }
+                }
+                else{
+                    print("双程学校线路结果:",responseData)
+                    let msg=(responseData.objectForKey("msg")) as! String
+                    let alertView=UIAlertView(title: "提示", message: msg, delegate: self, cancelButtonTitle: "确定")
+                    alertView.show()
+                }
+        }) { (error) in
+            print(error)
+        }
+    }
+    
+}

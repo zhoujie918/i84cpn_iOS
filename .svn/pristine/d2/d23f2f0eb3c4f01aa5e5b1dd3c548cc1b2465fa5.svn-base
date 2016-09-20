@@ -1,0 +1,133 @@
+//
+//  CPLineInfoModel.swift
+//  i84cpn
+//
+//  Created by 周杰 on 16/5/19.
+//  Copyright © 2016年 5i84. All rights reserved.
+//
+
+import UIKit
+
+class CPLineInfoModel: NSObject {
+    typealias callBackFun=(dateListAr:NSArray,stationListAr:NSArray,passengerListAr:NSArray,lineInfoObj:NSDictionary)->()
+    typealias callBackFun2=(orderId:Int)->()
+    typealias passGerFun=(resultList:NSArray)->()
+    
+    var dateListAr=NSMutableArray()
+    var stationListAr=NSMutableArray()
+    var passengerListAr=NSMutableArray()
+    var lineInfoObj=NSMutableDictionary()
+    
+    var emptyArray=[String]()
+    var emptyDic=Dictionary<String, String>()
+    
+    //获取线路详情
+    func lineInfoDataLoad(postURL:String,para:NSMutableDictionary,success:callBackFun){
+        CPAFHTTPSessionManager.postWithUrlString(postURL, parameter: para as [NSObject : AnyObject], progressBlock: nil, successBlock: { (responseData) in
+            self.dateListAr.removeAllObjects()
+            self.stationListAr.removeAllObjects()
+            self.passengerListAr.removeAllObjects()
+            self.lineInfoObj.removeAllObjects()
+//            print("参数＝",para)
+            if(responseData.objectForKey("success") as! Bool){
+                if((responseData.objectForKey("result")?.objectForKey("success") as! Bool)&&(responseData.objectForKey("result")?.objectForKey("result")?.count != nil)){
+                    let dateList=responseData.objectForKey("result")!.objectForKey("result")!.objectForKey("dateList")!
+                    let stationList=responseData.objectForKey("result")!.objectForKey("result")!.objectForKey("stationList")!
+                    let passengerList=responseData.objectForKey("result")!.objectForKey("result")!.objectForKey("passengerList")!
+                    let lineInfoObj=responseData.objectForKey("result")!.objectForKey("result")!.objectForKey("lineInfo")!
+                    success(dateListAr: dateList as! NSArray, stationListAr: stationList as! NSArray, passengerListAr: passengerList as! NSArray, lineInfoObj: lineInfoObj as! NSDictionary)
+                }else{
+                    print("获取线路查询结果：",responseData)
+//                    let msg=responseData.objectForKey("msg") as! String
+//                    let alertView=UIAlertView(title: "提示", message: msg, delegate: self, cancelButtonTitle: "确定")
+//                    alertView.show()
+                }
+            }else{
+                print("获取线路查询结果：",responseData)
+//                let msg=responseData.objectForKey("msg") as! String
+//                let alertView=UIAlertView(title: "提示", message: msg, delegate: self, cancelButtonTitle: "确定")
+//                alertView.show()
+            }
+
+            }) { (error) in
+                print(error)
+        }
+    }
+    
+    //获取乘客列表
+    func getPassger(postURL:String,para:[String:AnyObject],success:passGerFun){
+        CPAFHTTPSessionManager.postWithUrlString(postURL, parameter: para as [NSObject : AnyObject], progressBlock: nil, successBlock: { (responseData) in
+//            print("获取乘客列表:",responseData)
+            if(responseData.objectForKey("success") as! Bool){
+                if((responseData.objectForKey("result")!.count != nil)&&(responseData.objectForKey("result")!.count != 0)){
+                    let resultList=responseData.objectForKey("result")!
+                    success(resultList: resultList as! NSArray)
+                }
+                else{
+                    success(resultList: self.emptyArray)
+                }
+                
+            }else{
+                print("获取乘客列表结果：",responseData)
+//                let msg=responseData.objectForKey("msg") as! String
+//                let alertView=UIAlertView(title: "提示", message: msg, delegate: self, cancelButtonTitle: "确定")
+//                alertView.show()
+            }
+            }) { (error) in
+                print(error)
+        }
+    }
+    
+    //添加通讯地址
+    func getPassgerAddress(postURL:String,para:[String:AnyObject],success:passGerFun){
+        CPAFHTTPSessionManager.postWithUrlString(postURL, parameter: para as [NSObject : AnyObject], progressBlock: nil, successBlock: { (responseData) in
+//            print("添加通讯地址:",responseData)
+            if(responseData.objectForKey("success") as! Bool){
+                if((responseData.objectForKey("result")?.count != nil)&&(responseData.objectForKey("result")?.count != 0)){
+                    let resultList=responseData.objectForKey("result")!
+                    success(resultList: resultList as! NSArray)
+                }
+                else{
+                    success(resultList: self.emptyArray)
+                }
+            }else{
+                print("获取地址列表结果:",responseData)
+//                let msg=responseData.objectForKey("msg") as! String
+//                let alertView=UIAlertView(title: "提示", message: msg, delegate: self, cancelButtonTitle: "确定")
+//                alertView.show()
+            }
+
+        }) { (error) in
+            print(error)
+        }
+    }
+    
+    //获取订单Id
+    func getOrderId(postURL:String,para:NSMutableDictionary,success:callBackFun2){
+        CPAFHTTPSessionManager.postWithUrlString(postURL, parameter: para as [NSObject : AnyObject], progressBlock: nil, successBlock: { (responseData) in
+            print(responseData)
+            let dic = responseData as! NSDictionary
+            if dic.objectForKey("success") as! Bool {
+                if(responseData.objectForKey("result")?.objectForKey("success") as! Bool){
+                    let orderId=responseData.objectForKey("result")!.objectForKey("obj")!.objectForKey("orderId")! 
+                    print("新增订单成功，orderId=",orderId)
+                    success(orderId: orderId as! Int)
+                }else{
+                    let msg=responseData.objectForKey("result")?.objectForKey("msg") as! String
+                    let alertView=UIAlertView(title: "提示", message: msg, delegate: self, cancelButtonTitle: "确定")
+                    alertView.show()
+                }
+                
+            } else {
+                print("获取订单Id失败：",responseData)
+                let alertView=UIAlertView(title: "提示", message: "服务异常，请联系客服人员！", delegate: self, cancelButtonTitle: "确定")
+                alertView.show()
+            }
+
+            }) { (error) in
+                print(error)
+        }
+        
+    }
+
+}

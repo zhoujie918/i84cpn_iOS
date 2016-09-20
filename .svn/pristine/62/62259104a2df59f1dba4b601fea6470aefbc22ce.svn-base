@@ -1,0 +1,61 @@
+//
+//  CPFAQsViewController.swift
+//  i84cpn
+//
+//  Created by BenjaminRichard on 16/5/19.
+//  Copyright © 2016年 5i84. All rights reserved.
+//
+
+import UIKit
+
+class CPFAQsViewController: UIViewController, UITableViewDataSource, UITableViewDelegate {
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        title = "常见问题"
+        view.addSubview(FAQsView)
+    }
+    
+    override func viewWillAppear(animated: Bool) {
+        super.viewWillAppear(animated)
+        FAQsView.frame = view.frame
+    }
+    
+    override func viewDidAppear(animated: Bool) {
+        super.viewDidAppear(animated)
+        FAQsView.tableView.dataSource = self
+        FAQsView.tableView.delegate = self
+        FAQsView.tableView.reloadData()
+    }
+    
+    // datasource
+    func numberOfSectionsInTableView(tableView: UITableView) -> Int {
+        return 1
+    }
+    
+    func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        return titleArray.count
+    }
+    
+    func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
+        var cell = tableView.dequeueReusableCellWithIdentifier(cellId)
+        if cell == nil {
+            cell = UITableViewCell()
+            cell!.accessoryType = UITableViewCellAccessoryType.DisclosureIndicator
+        }
+        
+        cell!.textLabel?.text = titleArray[indexPath.row]
+        return cell!
+    }
+    
+    // delegate
+    func tableView(tableView: UITableView, didSelectRowAtIndexPath indexPath: NSIndexPath) {
+        let vc = CPFAQsDetailViewController()
+        self.hidesBottomBarWhenPushed=true
+        self.navigationController?.pushViewController(vc, animated: true)
+    }
+    
+    private let cellId = "FAQsCell"
+    private let FAQsView = CPFAQsView()
+    private var titleArray = ["励志中学新学期线路公示", "郑重公告", "杉木中学新学期线路公告","励志中学新学期线路公示", "郑重公告", "杉木中学新学期线路公告"]
+}

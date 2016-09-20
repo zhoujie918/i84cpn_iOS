@@ -1,0 +1,135 @@
+//
+//  CPPayResultController.m
+//  i84cpn
+//
+//  Created by 爱巴士-余夏伟 on 16/5/27.
+//  Copyright © 2016年 5i84. All rights reserved.
+//
+
+#import "CPPayResultController.h"
+#import "CPChooseSeatController.h"
+#import "CPAlipayModel.h"
+#import <i84cpn-Swift.h>
+
+@interface CPPayResultController (){
+    UIButton *btn;
+    CPAlipayModel *alipayModel;
+    NSDictionary *dicSeatData;
+}
+
+@property (weak, nonatomic) IBOutlet NSLayoutConstraint *imageLeft;
+@property (weak, nonatomic) IBOutlet NSLayoutConstraint *imageTop;
+@property (weak, nonatomic) IBOutlet NSLayoutConstraint *menuHeight;
+@property (weak, nonatomic) IBOutlet NSLayoutConstraint *getBabiTop;
+@property (weak, nonatomic) IBOutlet NSLayoutConstraint *menuLableTop;
+@property (weak, nonatomic) IBOutlet NSLayoutConstraint *menuLableBottom;
+
+@end
+
+@implementation CPPayResultController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    
+    self.title = @"付款结果";
+    self.imageTop.constant = 55 * SCALE_HEIGHT;
+    self.imageLeft.constant = 103 * SCALE_WIDTH;
+    self.getBabiTop.constant = 44 * SCALE_HEIGHT;
+    self.menuHeight.constant = 60 * SCALE_HEIGHT;
+    //隐藏巴币相关视图，临时将订单视图上移
+    self.menuLableTop.constant = -30;
+    self.menuLableBottom.constant = 100;
+    
+    alipayModel = [CPAlipayModel shareCPAlipayModel];
+    [self getChooseSeatData];
+}
+
+
+
+
+
+-(void)getChooseSeatData{
+//    NSDictionary *param = [NSDictionary dictionaryWithObjectsAndKeys:@"seat_init",@"action",alipayModel.lineId,@"lineId",alipayModel.classId,@"classesId", nil];
+    NSDictionary *param = [NSDictionary dictionaryWithObjectsAndKeys:@"seat_init",@"action",@"83",@"lineId",@"80",@"classesId", nil];
+    NSLog(@"座位接口参数 : %@",param);
+    [CPAFHTTPSessionManager postWithUrlString:URL_AUTH_API parameter:param progressBlock:nil successBlock:^(id responseObject) {
+        NSDictionary *dic = (NSDictionary *)responseObject;
+        NSLog(@"获取座位图接口返回 : %@",dic);
+        if (!dic[@"result"][@"msg"]) {
+            dicSeatData = dic[@"result"];
+        }
+    } failureBlock:^(NSError *error) {
+        NSLog(@"error : %@",error);
+    }];
+}
+
+#pragma mark 查看巴币余额
+- (IBAction)lookBalanceClick:(UIButton *)sender {
+}
+
+#pragma mark 消费返还巴币
+- (IBAction)consumerReturnClick:(UIButton *)sender {
+    [self hold];
+}
+
+#pragma mark 做任务领巴币
+- (IBAction)doWorkClick:(UIButton *)sender {
+    [self hold];
+}
+
+#pragma mark 巴币商品街
+- (IBAction)commodityStreetClick:(UIButton *)sender {
+    [self hold];
+}
+
+#pragma mark 选座
+- (IBAction)chooseSeatClick:(UIButton *)sender {
+    if (dicSeatData) {
+        CPChooseSeatController *chooseVC = [[CPChooseSeatController alloc] init];
+        chooseVC.dicData = dicSeatData;
+        [self.navigationController pushViewController:chooseVC animated:YES];
+    }else{
+        UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"提示" message:@"请求服务器数据出错,请稍后再试" delegate:nil cancelButtonTitle:@"知道了" otherButtonTitles: nil];
+        [alert show];
+        [self getChooseSeatData];
+    }
+}
+
+#pragma mark 查看我的订单
+- (IBAction)lookOrderClick:(UIButton *)sender {
+    NSMutableArray * array =[[NSMutableArray alloc]initWithArray:self.navigationController.viewControllers];
+    for (UIViewController *VC in array) {
+        if ([VC isKindOfClass:[CPMyOrdersViewController class]]) {
+            [self.navigationController popToViewController:VC animated:YES];
+        }
+    }
+    CPMyOrdersViewController *orderVC = [[CPMyOrdersViewController alloc] init];
+    self.hidesBottomBarWhenPushed = true;
+    [self.navigationController pushViewController:orderVC animated:YES];
+}
+
+-(void)hold{
+    UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"提示" message:@"等待开发" delegate:nil cancelButtonTitle:@"知道了" otherButtonTitles: nil];
+    [alert show];
+}
+
+
+
+
+
+- (void)didReceiveMemoryWarning {
+    [super didReceiveMemoryWarning];
+    // Dispose of any resources that can be recreated.
+}
+
+/*
+#pragma mark - Navigation
+
+// In a storyboard-based application, you will often want to do a little preparation before navigation
+- (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender {
+    // Get the new view controller using [segue destinationViewController].
+    // Pass the selected object to the new view controller.
+}
+*/
+
+@end

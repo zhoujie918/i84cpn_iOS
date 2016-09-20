@@ -1,0 +1,77 @@
+//
+//  CPHistoryViewController.swift
+//  i84cpn
+//
+//  Created by Benjamin on 16/5/27.
+//  Copyright © 2016年 5i84. All rights reserved.
+//
+
+import UIKit
+
+class CPHistoryViewController: UIViewController, UITableViewDataSource {
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        title = "申请记录"
+        view.addSubview(historyView)
+    }
+    
+    override func viewWillAppear(animated: Bool) {
+        super.viewWillAppear(animated)
+        historyView.frame = view.frame
+    }
+    
+    override func viewDidAppear(animated: Bool) {
+        super.viewDidAppear(animated)
+        historyView.tableView.registerClass(CPHistoryTableViewCell.self, forCellReuseIdentifier: cellId)
+        historyView.tableView.dataSource = self
+    }
+    
+    func getData() {
+        CPAFHTTPSessionManager.postWithUrlString(Constants.userInfoURL, parameter: Constants.getHistoryOfRelevanceInfo(), progressBlock: { (progress) in
+            
+            }, successBlock: { (respondData) in
+                let dic:NSDictionary = respondData as! NSDictionary
+                let rsp: Bool = dic["success"] as! Bool
+                if rsp {
+                    self.arrayData = dic["result"] as? NSArray
+                    
+                } else {
+                    let errorCode = dic.objectForKey("errorCode") as? String
+                    if errorCode == "00001" {
+                        CPUserModel.clearData()
+                        CPUserModel.userLogin()
+                    }
+                }
+            }) { (error) in
+                print(error)
+        }
+    }
+    
+    // datasource
+    func numberOfSectionsInTableView(tableView: UITableView) -> Int {
+        return 1
+    }
+    
+    func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        if arrayData == nil {
+            return 0
+        }
+        return (arrayData?.count)!
+    }
+    
+    func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
+        let date = arrayData![indexPath.row].objectForKey("applyDate") as! String
+        let phoneNum = arrayData![indexPath.row].objectForKey("mobile") as! String
+        let name = arrayData![indexPath.row].objectForKey("psgName") as! String
+        let detail = arrayData![indexPath.row].objectForKey("applyContent") as! String
+        let state = arrayData![indexPath.row].objectForKey("applyStatus") as! Int
+        let cell = tableView.dequeueReusableCellWithIdentifier(cellId) as! CPHistoryTableViewCell
+        cell.setCell(date, phoneNum: phoneNum, name:  name, detail: detail, state: state)
+        return cell
+    }
+    
+    let cellId = "historyCell"
+    private var arrayData: NSArray?
+    let historyView = CPHistoryView()
+}

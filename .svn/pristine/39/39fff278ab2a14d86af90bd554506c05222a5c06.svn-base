@@ -1,0 +1,319 @@
+//
+//  CPAddPassengerView.swift
+//  i84cpn
+//
+//  Created by BenjaminRichard on 16/5/23.
+//  Copyright © 2016年 5i84. All rights reserved.
+//
+
+import UIKit
+
+class CPAddPassengerView: UIView {
+
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        self.backgroundColor = Constants.paleBGColor
+        
+        self.addSubview(scrollView)
+        
+        scrollView.addSubview(containView1)
+        containView1.addSubview(photoLabel)
+        containView1.addSubview(photoButton)
+        containView1.addSubview(headImageView)
+        containView1.addSubview(changeHeadImageButton)
+        
+        scrollView.addSubview(containView2)
+        containView2.addSubview(idLabel)
+        containView2.addSubview(idTextField)
+        containView2.addSubview(nameLabel)
+        containView2.addSubview(nameTextField)
+        
+        scrollView.addSubview(tipLabel)
+        
+        scrollView.addSubview(containView3)
+        containView3.addSubview(rideInfoPushLabel)
+        containView3.addSubview(rideInfoSwitch)
+        
+        scrollView.addSubview(containView4)
+        containView4.addSubview(verifyCodeLabel)
+        containView4.addSubview(verifyCodeTextField)
+        containView4.addSubview(verifyCodeButton)
+        scrollView.addSubview(OKButton)
+        
+        verifyCodeButton.addTarget(self, action: #selector(reloadVerifyCode), forControlEvents: .TouchUpInside)
+    }
+    
+    required init?(coder aDecoder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    
+    func reloadVerifyCode() {
+        CPAFHTTPSessionManager.getWithUrlString(Constants.captchaImageURL, parameter: nil, progressBlock: { (progress) in
+            
+            }, successBlock: { (respondData) in
+                let img = UIImage(data: respondData as! NSData)
+                self.verifyCodeButton.setBackgroundImage(img, forState: .Normal)
+            }, failureBlock: { (error) in
+                print(error)
+        })
+    }
+    
+    override func layoutSubviews() {
+        scrollView.snp_makeConstraints { (make) in
+            make.edges.equalTo(self).inset(UIEdgeInsetsMake(0, 0, 0, 0))
+        }
+        
+        containView1.snp_makeConstraints { (make) in
+            make.left.equalTo(0)
+            make.top.equalTo(10)
+            make.width.equalTo(Constants.screenWidth)
+            make.height.equalTo(100)
+        }
+        
+        photoLabel.snp_makeConstraints { (make) in
+            make.centerY.equalTo(containView1)
+            make.left.equalTo(20)
+        }
+        
+        photoButton.snp_makeConstraints { (make) in
+            make.centerY.equalTo(containView1)
+            make.right.equalTo(-20)
+        }
+        
+        headImageView.snp_makeConstraints { (make) in
+            make.centerY.equalTo(containView1)
+            make.right.equalTo(changeHeadImageButton.snp_left).offset(-20)
+            make.width.height.equalTo(80)
+        }
+        
+        changeHeadImageButton.snp_makeConstraints { (make) in
+            make.centerY.equalTo(containView1)
+            make.right.equalTo(-20)
+        }
+        
+        containView2.snp_makeConstraints { (make) in
+            make.left.equalTo(0)
+            make.top.equalTo(containView1.snp_bottom).offset(20)
+            make.width.equalTo(Constants.screenWidth)
+            make.bottom.equalTo(nameLabel.snp_bottom).offset(20)
+        }
+        
+        idLabel.snp_makeConstraints { (make) in
+            make.left.equalTo(photoLabel)
+            make.top.equalTo(containView2).offset(20)
+            make.height.equalTo(50)
+        }
+        
+        idTextField.snp_makeConstraints { (make) in
+            make.left.equalTo(nameLabel.snp_right).offset(15)
+            make.centerY.equalTo(idLabel)
+            make.right.equalTo(-20)
+            make.height.equalTo(34)
+        }
+        
+        nameLabel.snp_makeConstraints { (make) in
+            make.left.equalTo(idLabel)
+            make.top.equalTo(idLabel.snp_bottom).offset(30)
+            make.width.equalTo(70)
+        }
+        
+        nameTextField.snp_makeConstraints { (make) in
+            make.left.equalTo(idTextField)
+            make.centerY.equalTo(nameLabel)
+            make.right.equalTo(-20)
+            make.height.equalTo(34)
+        }
+        
+        tipLabel.snp_makeConstraints { (make) in
+            make.left.right.equalTo(0)
+            make.top.equalTo(containView2.snp_bottom).offset(10)
+            make.centerX.equalTo(self)
+        }
+        
+        containView3.snp_makeConstraints { (make) in
+            make.top.equalTo(tipLabel.snp_bottom).offset(10)
+            make.left.equalTo(0)
+            make.width.equalTo(Constants.screenWidth)
+            make.bottom.equalTo(rideInfoPushLabel.snp_bottom).offset(20)
+        }
+        
+        rideInfoPushLabel.snp_makeConstraints { (make) in
+            make.left.equalTo(photoLabel)
+            make.top.equalTo(containView3).offset(20)
+        }
+        
+        rideInfoSwitch.snp_makeConstraints { (make) in
+            make.centerY.equalTo(rideInfoPushLabel)
+            make.right.equalTo(-20)
+        }
+        
+        containView4.snp_makeConstraints { (make) in
+            make.left.right.equalTo(0)
+            make.top.equalTo(containView3.snp_bottom).offset(20)
+            make.bottom.equalTo(verifyCodeLabel.snp_bottom).offset(20)
+        }
+        
+        verifyCodeLabel.snp_makeConstraints { (make) in
+            make.left.equalTo(20)
+            make.top.equalTo(containView4).offset(20)
+            make.width.equalTo(60)
+        }
+        
+        verifyCodeTextField.snp_makeConstraints { (make) in
+            make.left.equalTo(verifyCodeLabel.snp_right).offset(4)
+            make.right.equalTo(verifyCodeButton.snp_left).offset(-4)
+            make.centerY.equalTo(verifyCodeLabel)
+            make.height.equalTo(34)
+        }
+        
+        verifyCodeButton.snp_makeConstraints { (make) in
+            make.centerY.equalTo(verifyCodeLabel)
+            make.right.equalTo(-20)
+            make.width.equalTo(100)
+            make.height.equalTo(38)
+        }
+        
+        OKButton.snp_makeConstraints { (make) in
+            make.left.equalTo(30)
+            make.right.equalTo(-30)
+            make.top.equalTo(containView4.snp_bottom).offset(30)
+        }
+        
+        scrollView.contentSize = CGSizeMake(Constants.screenWidth, OKButton.frame.origin.y + OKButton.frame.size.height + 80)
+    }
+    
+    let scrollView: UIScrollView = {
+        let view: UIScrollView = UIScrollView()
+        view.showsVerticalScrollIndicator = false
+        view.showsHorizontalScrollIndicator = false
+        view.scrollEnabled = true
+        return view
+    } ()
+    
+    private let containView1 = Constants.containView()
+    private let photoLabel: UILabel = {
+        let view = UILabel()
+        view.text = "乘客照片"
+        return view
+    } ()
+    
+    let photoButton: UIButton = {
+        let view = UIButton()
+        view.setImage(UIImage(named: "icon_add"), forState: .Normal)
+        return view
+    } ()
+    
+    let headImageView: UIImageView = {
+        let view = UIImageView()
+        view.layer.cornerRadius = 80 * 0.5;
+        view.layer.masksToBounds = true;
+        view.hidden = true
+        return view
+    } ()
+    
+    let changeHeadImageButton: UIButton = {
+        let view = UIButton()
+        view.setTitle("更改", forState: .Normal)
+        view.setTitleColor(Constants.yellowWordColor, forState: .Normal)
+        view.contentEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
+        view.layer.borderColor = Constants.yellowWordColor.CGColor
+        view.layer.borderWidth = 1
+        view.hidden = true
+        return view
+    } ()
+    
+    private let containView2 = Constants.containView()
+    private let idLabel: UILabel = {
+        let view = UILabel()
+        view.text = "身份证"
+        return view
+    } ()
+    let idTextField: UITextField = {
+        let view = UITextField()
+        view.layer.borderColor = Constants.paleBGColor.CGColor
+        view.layer.borderWidth = 1
+        view.leftView=UIView(frame: CGRectMake(0,0,10,34))
+        view.leftViewMode=UITextFieldViewMode.Always
+        return view
+    } ()
+    
+    private let nameLabel: UILabel = {
+        let view = UILabel()
+        view.text = "乘客信息"
+        return view
+    } ()
+    
+    let nameTextField: UITextField = {
+        let view = UITextField()
+        view.layer.borderColor = Constants.paleBGColor.CGColor
+        view.layer.borderWidth = 1
+        view.leftView=UIView(frame: CGRectMake(0,0,10,34))
+        view.leftViewMode=UITextFieldViewMode.Always
+        return view
+    } ()
+    
+    private let tipLabel: UILabel = {
+        let view = UILabel()
+        view.numberOfLines = 0
+        view.font = Constants.smallFont
+        var text: NSMutableAttributedString = NSMutableAttributedString(string: "请如实填写身份证信息，我们将通过公安部门进行验证\n如验证失败2次账户将被锁定一天")
+        text.addAttributes([NSForegroundColorAttributeName: Constants.redWordColor], range: NSMakeRange(0, text.length))
+        let style = NSMutableParagraphStyle()
+        style.lineSpacing = 9
+        style.alignment = NSTextAlignment.Center
+        
+        text.addAttributes([NSParagraphStyleAttributeName: style], range: NSMakeRange(0, text.length))
+        view.attributedText = text
+        return view
+    } ()
+    
+    private let containView3 = Constants.containView()
+    private let rideInfoPushLabel: UILabel = {
+        let view = UILabel()
+        view.text = "乘车信息推送"
+        return view
+    } ()
+    let rideInfoSwitch: UISwitch = {
+        let view = UISwitch()
+        view.onTintColor = Constants.mainColor
+        return view
+    } ()
+    
+    private let containView4 = Constants.containView()
+    private let verifyCodeLabel: UILabel = {
+        let view = UILabel()
+        view.text = "验证码"
+        return view
+    } ()
+    let verifyCodeTextField: UITextField = {
+        let view = UITextField()
+        view.layer.borderColor = Constants.paleBGColor.CGColor
+        view.layer.borderWidth = 1
+        view.leftView=UIView(frame: CGRectMake(0,0,10,34))
+        view.leftViewMode=UITextFieldViewMode.Always
+        return view
+    } ()
+    let verifyCodeButton: UIButton = {
+        let btn: UIButton = UIButton()
+        btn.backgroundColor = Constants.paleBGColor
+        CPAFHTTPSessionManager.getWithUrlString(Constants.captchaImageURL, parameter: nil, progressBlock: { (progress) in
+            
+            }, successBlock: { (respondData) in
+                let img = UIImage(data: respondData as! NSData)
+                btn.setBackgroundImage(img, forState: .Normal)
+            }, failureBlock: { (error) in
+                print(error)
+        })
+        return btn
+    } ()
+    
+    let OKButton: UIButton = {
+        let btn: UIButton = UIButton()
+        btn.setTitle("确定", forState: .Normal)
+        btn.tintColor = Constants.whiteWordColor
+        btn.layer.cornerRadius = 16
+        btn.setBackgroundImage(UIImage(named: "btn_login_nor"), forState: .Normal)
+        return btn
+    } ()
+}

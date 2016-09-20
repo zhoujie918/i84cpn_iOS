@@ -1,0 +1,133 @@
+//
+//  CPPassengerInfoViewController.swift
+//  i84cpn
+//
+//  Created by BenjaminRichard on 16/5/23.
+//  Copyright © 2016年 5i84. All rights reserved.
+//
+
+import UIKit
+
+class CPPassengerInfoViewController: UIViewController, UITableViewDataSource, UITableViewDelegate {
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        title = "乘客信息"
+        
+        view.addSubview(passengerInfoView)
+        
+    }
+    
+    override func viewWillAppear(animated: Bool) {
+        super.viewWillAppear(animated)
+        getPassengerInfoList()
+        passengerInfoView.frame = view.frame
+    }
+    
+    override func viewDidAppear(animated: Bool) {
+        super.viewDidAppear(animated)
+        passengerInfoView.tableView.dataSource = self
+        passengerInfoView.tableView.delegate = self
+        
+        passengerInfoView.tableView.registerClass(CPPassengerInfoTableViewCell.self, forCellReuseIdentifier: cellId)
+        
+        passengerInfoView.addButton.addTarget(self, action: #selector(addPassenger), forControlEvents: .TouchUpInside)
+        passengerInfoView.relevanceButton.addTarget(self, action: #selector(relevancePassengerInfo), forControlEvents: .TouchUpInside)
+        
+        passengerInfoView.tableView.reloadData()
+    }
+
+    func getPassengerInfoList() {
+        CPAFHTTPSessionManager.postWithUrlString(Constants.userInfoURL, parameter: Constants.getPassengerInfoList(), progressBlock: { (progress) in
+            
+            }, successBlock: { (respondData) in
+                let dic:NSDictionary = respondData as! NSDictionary
+                let rsp: Bool = dic["success"] as! Bool
+                if rsp {
+                    let objData: NSMutableArray = dic["result"] as! NSMutableArray
+                    
+                    var i = 0
+                    for passenger in objData {
+                        if  passenger as! NSObject == NSNull.init() {
+                            objData.removeObjectAtIndex(i)
+                            i -= 1
+                        }
+                        i += 1
+                    }
+                    self.passengerInfo = objData
+                } else {
+                    
+                    let errorCode = dic.objectForKey("errorCode") as? String
+                    if errorCode == "00001" {
+                        CPUserModel.clearData()
+                        CPUserModel.userLogin()
+                    }
+                }
+            }, failureBlock: { (error) in
+                print(error)
+        })
+    }
+    
+    // 事件响应
+    func addPassenger(button: UIButton) {
+        let vc = CPAddPassengerViewController()
+        self.hidesBottomBarWhenPushed=true
+        self.navigationController?.pushViewController(vc, animated: true)
+        vc.hideNavi = true
+    }
+    
+    func relevancePassengerInfo(button: UIButton) {
+        let vc = CPRelevancePassengerRideInfoPushViewController()
+        self.hidesBottomBarWhenPushed=true
+        self.navigationController?.pushViewController(vc, animated: true)
+    }
+    
+    // delegate
+    func tableView(tableView: UITableView, didSelectRowAtIndexPath indexPath: NSIndexPath) {
+        let vc = CPEditPassengerInfoViewController()
+        vc.psgId = passengerInfo![indexPath.row].objectForKey("psgId") as! Int
+        self.hidesBottomBarWhenPushed=true
+        self.navigationController?.pushViewController(vc, animated: true)
+    }
+    
+    // datasource
+    func numberOfSectionsInTableView(tableView: UITableView) -> Int {
+        return 1
+    }
+    
+    func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        if passengerInfo == nil {
+            return 0
+        }
+        return (passengerInfo?.count)!
+    }
+    
+    func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
+        let cell = tableView.dequeueReusableCellWithIdentifier(cellId) as! CPPassengerInfoTableViewCell
+        
+        if passengerInfo![indexPath.row].objectForKey("psgName") != nil {
+            cell.nameLabel.text = passengerInfo![indexPath.row].objectForKey("psgName") as? String
+        }
+        if passengerInfo![indexPath.row].objectForKey("idNo") != nil {
+            cell.idLabel.text = passengerInfo![indexPath.row].objectForKey("idNo") as? String
+        }
+        if passengerInfo![indexPath.row].objectForKey("psgPhoto") != nil {
+            let imageName = passengerInfo![indexPath.row].objectForKey("psgPhoto") as? String
+            CPAFHTTPSessionManager.getWithUrlString(Constants.getImageURL, parameter: Constants.getImageWithImageName(imageName!), progressBlock: { (progress) in
+            
+            }, successBlock: { (respondData) in
+            if (respondData != nil) {
+            let img = UIImage(data: respondData as! NSData)
+            cell.headImageView.image = img
+            }
+            }, failureBlock: { (error) in
+            print(error)
+            })
+        }
+        return cell
+    }
+    
+    private let cellId = "passengerInfoCell"
+    private let passengerInfoView = CPPassengerInfoView()
+    private var passengerInfo: NSArray?
+}

@@ -1,0 +1,237 @@
+//
+//  CPLineSearchSingleView.swift
+//  i84cpn
+//
+//  Created by 周杰 on 16/5/11.
+//  Copyright © 2016年 5i84. All rights reserved.
+//
+
+import UIKit
+
+protocol lineSearchResultDelegate:NSObjectProtocol {
+    func goLineInfoCtl(row:Int,lineType:Int)
+}
+
+
+class CPLineSearchResultView: UIView,UITableViewDelegate,UITableViewDataSource {
+    weak var delegate:lineSearchResultDelegate?
+    
+    var lineType:Int!
+    var lineSearchResultTableView=UITableView(frame: CGRectZero, style: UITableViewStyle.Grouped)
+    var homePageView=CPHomePageView()
+    var addressSearchCtl=CPAddressSearchController()
+    var headerView=UIView()
+//    var statusView=CPOrderWaitView()
+    
+    //数据加载
+    var lineNameArray=NSMutableArray()
+    var gradeArray=NSMutableArray()
+    var stationNameArray=NSMutableArray()
+    var priceArray=NSMutableArray()
+    var num=NSInteger()             //行数
+    
+    var lineNameArrayBack=NSMutableArray()
+    var priceArrayBack=NSMutableArray()
+    
+    var singleTrip:Int!
+    var selectedRow:Int!
+    
+    var isRecruitAr=NSMutableArray()
+    var seatNumAr=NSMutableArray()
+    var isRecruit:String!
+    
+    var orgOrderId:Int!
+    
+    var myClosure : sendClickClosure?
+    
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        
+        self.addSubview(headerView)
+        headerView.backgroundColor=COLOR_BACKGROUND_GRAY
+        headerView.layer.borderWidth=1
+        headerView.layer.borderColor=COLOR_SEGMENTATION.CGColor
+        
+        self.addSubview(lineSearchResultTableView)
+        lineSearchResultTableView.backgroundColor=COLOR_BACKGROUND_GRAY
+        lineSearchResultTableView.dataSource=self
+        lineSearchResultTableView.delegate=self
+        
+//        self.addSubview(statusView)
+//        statusView.setLoadingDataView()
+//        lineSearchResultTableView.hidden=true
+        
+        //设置分割线顶格
+        if lineSearchResultTableView.respondsToSelector(Selector("setSeparatorInset:")){
+            lineSearchResultTableView.separatorInset = UIEdgeInsetsZero
+        }
+        if lineSearchResultTableView.respondsToSelector(Selector("setLayoutMargins:")){
+            lineSearchResultTableView.layoutMargins = UIEdgeInsetsZero
+        }
+        lineSearchResultTableView.separatorColor=COLOR_SEGMENTATION
+        lineSearchResultTableView.separatorStyle = .SingleLine
+        
+    }
+    
+    func numberOfSectionsInTableView(tableView: UITableView) -> Int {
+        return 1
+    }
+
+    func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        return num
+    }
+
+    func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
+        //singleTrip＝1表示单程，0是往返
+        if singleTrip==1 {
+            var cell=lineSearchResultTableView.dequeueReusableCellWithIdentifier("cell") as! CPLineResultTableViewCell!
+            if(cell==nil){
+                cell=CPLineResultTableViewCell(style: UITableViewCellStyle.Default, reuseIdentifier: "cell")
+            }
+            cell.lineResultDataLoad(lineNameArray[indexPath.row] as! String, grade: gradeArray[indexPath.row] as! String, stationName: stationNameArray[indexPath.row] as! String, price: priceArray[indexPath.row] as! String)
+            
+            if(isRecruitAr.count > 0){
+                cell.isRecruit=isRecruitAr[indexPath.row] as! String
+                cell.seatNum=seatNumAr[indexPath.row] as! AnyObject
+            }
+            
+            
+            if(cell.price.text==""){
+                cell.price.text="0.00"
+            }
+            
+            return cell
+            
+            //往返
+        }else {
+            var cell=lineSearchResultTableView.dequeueReusableCellWithIdentifier("cell") as! CPLineResultTableViewBackCell!
+            if(cell==nil){
+                cell=CPLineResultTableViewBackCell(style: UITableViewCellStyle.Default, reuseIdentifier: "cell")
+            }
+            cell.lineResultDataLoad2(lineNameArray[indexPath.row] as! String, lineNameBack: lineNameArrayBack[indexPath.row] as! String, grade: gradeArray[indexPath.row] as! String, stationName: stationNameArray[indexPath.row] as! String, price: priceArray[indexPath.row] as! String, priceBack: priceArrayBack[indexPath.row] as! String)
+            
+            if(isRecruitAr.count > 0){
+                cell.isRecruit=isRecruitAr[indexPath.row] as! String
+                cell.seatNum=seatNumAr[indexPath.row] as! AnyObject
+            }
+            
+            if(cell.price.text==""){
+                cell.price.text="0.00"
+            }
+            return cell
+        }
+    }
+    
+    
+    func tableView(tableView: UITableView, heightForRowAtIndexPath indexPath: NSIndexPath) -> CGFloat {
+        return HEIGHT_DYNAMIC(80)
+    }
+ 
+    func tableView(tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat {
+        return HEIGHT_DYNAMIC(60)
+    }
+    func tableView(tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
+        return 0.0001
+    }
+    
+    //cell分割线顶格
+    func tableView(tableView: UITableView, willDisplayCell cell: UITableViewCell, forRowAtIndexPath indexPath: NSIndexPath) {
+        if cell.respondsToSelector(Selector("setLayoutMargins:")){
+            cell.layoutMargins = UIEdgeInsetsZero
+        }
+        if cell.respondsToSelector(Selector("setSeparatorInset:")){
+            cell.separatorInset = UIEdgeInsetsZero
+        }
+    }
+    
+    func tableView(tableView: UITableView, didSelectRowAtIndexPath indexPath: NSIndexPath) {
+        selectedRow=tableView.indexPathForSelectedRow!.row
+        if(orgOrderId != nil)&&(seatNumAr[selectedRow] as! NSObject==0) {
+            let alertView=UIAlertView(title: "提示", message: "改签订单不能选择满座的线路", delegate: self, cancelButtonTitle: "确定")
+            alertView.show()
+        }
+        else if(self.delegate != nil){
+            self.isRecruit=isRecruitAr[selectedRow] as! String
+            self.delegate?.goLineInfoCtl(selectedRow,lineType: lineType)
+        }
+        
+    }
+    
+    func tableView(tableView: UITableView, viewForFooterInSection section: Int) -> UIView? {
+        
+        let footView=UIView()
+        let tap = UITapGestureRecognizer(target: self, action: #selector(CPLineSearchResultView.gotoCustomLine))
+        footView.addGestureRecognizer(tap)
+        footView.backgroundColor=COLOR_BACKGROUND_GRAY
+        
+        let questionLabel=UILabel()
+        footView.addSubview(questionLabel)
+        questionLabel.text="没有满意的专线？"
+        questionLabel.snp_makeConstraints { (make) in
+            make.top.equalTo(footView).offset(HEIGHT_DYNAMIC(10))
+            make.centerX.equalTo(footView)
+            make.width.equalTo(self.bounds.width)
+//            make.height.equalTo(HEIGHT_DYNAMIC(20))
+        }
+        questionLabel.textColor=COLOR_TEXT_TIP
+        questionLabel.font=UIFont.boldSystemFontOfSize(13)
+        questionLabel.textAlignment=NSTextAlignment.Center
+        
+        let labelB=UILabel()
+        footView.addSubview(labelB)
+        labelB.text="快来私人订制吧 >>"
+        let attrs=[NSUnderlineColorAttributeName:COLOR_TEXT_ORANGE,NSUnderlineStyleAttributeName:1]
+        let underLineStr=NSMutableAttributedString(string: labelB.text!, attributes: attrs)
+        labelB.attributedText=underLineStr
+        labelB.snp_makeConstraints { (make) in
+            make.centerX.equalTo(footView)
+            make.top.equalTo(questionLabel.snp_bottom).offset(HEIGHT_DYNAMIC(5))
+            make.width.equalTo(self.bounds.width)
+//            make.size.equalTo(CGSizeMake(self.bounds.width, HEIGHT_DYNAMIC(20)))
+        }
+        labelB.textColor=COLOR_TEXT_ORANGE
+        labelB.font=UIFont.systemFontOfSize(13)
+        labelB.textAlignment=NSTextAlignment.Center
+        
+        return footView
+    }
+    
+    
+    
+    //MARK: 点击订制路线
+    func initWithClosure(closure:sendClickClosure?){
+        myClosure = closure
+    }
+
+    func gotoCustomLine() {
+        if (myClosure != nil){
+            myClosure!(tag:0)
+        }
+    }
+    
+    required init?(coder aDecoder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        
+        headerView.snp_makeConstraints { (make) in
+            make.top.left.equalTo(self).offset(0)
+            make.width.equalTo(self.bounds.width)
+            make.height.equalTo(HEIGHT_DYNAMIC(15))
+        }
+        
+        lineSearchResultTableView.snp_makeConstraints { (make) in
+            make.top.equalTo(self).offset(HEIGHT_DYNAMIC(15))
+            make.left.equalTo(self).offset(0)
+            make.width.equalTo(self.bounds.size.width)
+            make.height.equalTo(self.bounds.size.height-120)
+        }
+//        statusView.snp_makeConstraints { (make) in
+//            make.top.equalTo(self).offset(HEIGHT_DYNAMIC(60))
+//            make.width.equalTo(self.bounds.width)
+//            make.height.equalTo(self.bounds.size.height-120)
+//        }
+    }
+}

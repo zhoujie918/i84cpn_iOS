@@ -1,0 +1,22 @@
+//
+//  CPAFHTTPSessionManager.h
+//  i84cpn
+//
+//  Created by BenjaminRichard on 16/5/17.
+//  Copyright © 2016年 5i84. All rights reserved.
+//
+
+#import <AFNetworking/AFNetworking.h>
+
+@interface CPAFHTTPSessionManager : AFHTTPSessionManager
++ (instancetype)shareHttpMangager;
+
++ (void)getWithUrlString:(NSString *)url parameter:(NSDictionary *)param progressBlock:(void (^)(NSProgress *progress))progress successBlock:(void (^)(id responseObject))success failureBlock:(void (^)(NSError *error))failure;
+
++ (void)getJsonWithUrlString:(NSString *)url parameter:(NSDictionary *)param progressBlock:(void (^)(NSProgress *))progress successBlock:(void (^)(id))success failureBlock:(void (^)(NSError *))failure;
+
++ (void)postWithUrlString:(NSString *)url parameter:(NSDictionary *)param progressBlock:(void (^)(NSProgress *progress))progress successBlock:(void (^)(id responseObject))success failureBlock:(void (^)(NSError *error))failure;
+
+
++(void)multiUploadWithUrlString:(NSString *)url params:(NSDictionary *)params ImageDataArray:(NSArray *)arrData progressBlock:(void (^)(NSProgress *))progress successBlock:(void (^)(id))success failureBlock:(void (^)(NSError *))failure;
+@end

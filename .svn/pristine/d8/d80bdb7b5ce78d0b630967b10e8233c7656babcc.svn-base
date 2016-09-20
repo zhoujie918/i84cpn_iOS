@@ -1,0 +1,322 @@
+//
+//  CPRePayCardView.swift
+//  i84cpn
+//
+//  Created by 杰伦 on 16/5/28.
+//  Copyright © 2016年 5i84. All rights reserved.
+//
+
+import UIKit
+
+class CPRePayCardView: UIView, UITableViewDataSource, UITableViewDelegate {
+
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        self.backgroundColor = Constants.clearBlackBGColor
+        
+        self.addSubview(containView)
+        containView.addSubview(contentLabel)
+        containView.addSubview(line1)
+        
+        containView.addSubview(addressTitleLabel)
+        containView.addSubview(addressButton)
+        
+        containView.addSubview(line2)
+        
+        containView.addSubview(payTypeLabel)
+        containView.addSubview(aliPayButton)
+        containView.addSubview(weixinPayButton)
+        
+        containView.addSubview(payButton)
+        containView.addSubview(closeButton)
+        
+        containView.addSubview(tableView)
+        tableView.dataSource = self
+        tableView.delegate = self
+        
+        
+        addressButton.addTarget(self, action: #selector(selectAddress), forControlEvents: .TouchUpInside)
+        aliPayButton.addTarget(self, action: #selector(selectPayType), forControlEvents: .TouchUpInside)
+        weixinPayButton.addTarget(self, action: #selector(selectPayType), forControlEvents: .TouchUpInside)
+    }
+    
+    required init?(coder aDecoder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    
+
+    private var addressId = 0
+    private var payType = 0
+    private var dataArray: NSArray?
+    
+    // 事件响应
+    func getAddressId() ->Int {
+        return addressId
+    }
+    
+    func getPayType() -> Int {
+        return payType
+    }
+    
+    func selectAddress(button: UIButton) {
+        if dataArray != nil {
+            tableView.hidden = false
+            self.bringSubviewToFront(tableView)
+        } else {
+            getAddressList()
+        }
+        
+    }
+    
+    func selectPayType(button: UIButton) {
+
+        if button.tag != payType {
+            button.backgroundColor = Constants.yellowWordColor
+            button.setTitleColor(Constants.whiteWordColor, forState: .Normal)
+            if button.tag == 0 {
+                weixinPayButton.backgroundColor = Constants.whiteBGColor
+                weixinPayButton.setTitleColor(Constants.yellowWordColor, forState: .Normal)
+            } else {
+                aliPayButton.backgroundColor = Constants.whiteBGColor
+                aliPayButton.setTitleColor(Constants.yellowWordColor, forState: .Normal)
+            }
+            payType = button.tag
+        }
+    }
+    
+    func getAddressList() {
+        CPAFHTTPSessionManager.postWithUrlString(Constants.userInfoURL, parameter: Constants.getAddressList(), progressBlock: { (progress) in
+            
+            }, successBlock: { (respondData) in
+                let dic:NSDictionary = respondData as! NSDictionary
+                let rsp: Bool = dic["success"] as! Bool
+                if rsp {
+                    self.dataArray = dic["result"] as? NSArray
+                    let address = self.dataArray![0].objectForKey("address") as! String
+                    self.addressId = self.dataArray![0].objectForKey("uasId") as! Int
+                    self.addressButton.setTitle(address, forState: .Normal)
+                    self.tableView.reloadData()
+                    
+                    self.addressButton.titleEdgeInsets = UIEdgeInsets(top: 5, left: 0, bottom: 5, right: 13)
+                    self.addressButton.imageEdgeInsets = UIEdgeInsets(top: 0, left: self.addressButton.frame.width - 13, bottom: 0, right: 0)
+                    self.addressButton.setImage(UIImage(named: "icon_down"), forState: .Normal)
+                }  else {
+                    print(dic)
+                }
+            }, failureBlock: { (error) in
+                print(error)
+        })
+    }
+    
+    
+    // delegate
+    func tableView(tableView: UITableView, didSelectRowAtIndexPath indexPath: NSIndexPath) {
+        let address = dataArray![indexPath.row].objectForKey("address") as! String
+        self.addressId = self.dataArray![indexPath.row].objectForKey("uasId") as! Int
+        self.addressButton.setTitle(address, forState: .Normal)
+        
+        tableView.hidden = true
+    }
+    
+    // datasource 
+    func numberOfSectionsInTableView(tableView: UITableView) -> Int {
+        return 1
+    }
+    
+    func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        if dataArray == nil {
+            return 0
+        }
+        return dataArray!.count
+    }
+    
+    func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
+        var cell = tableView.dequeueReusableCellWithIdentifier("repayCellId")
+        if cell == nil {
+            cell = UITableViewCell()
+            cell?.textLabel?.font = Constants.smallFont
+        }
+        cell?.textLabel?.text = dataArray![indexPath.row].objectForKey("address") as? String!
+        
+        return cell!
+    }
+    
+    
+    
+    // 界面
+    override func layoutSubviews() {
+        containView.snp_makeConstraints { (make) in
+            make.centerX.equalTo(self)
+            make.centerY.equalTo(self)
+            make.top.equalTo(contentLabel.snp_top).offset(-20)
+            make.bottom.equalTo(closeButton.snp_bottom).offset(20)
+            make.left.equalTo(20)
+            make.right.equalTo(self).offset(-20)
+        }
+        
+        contentLabel.snp_makeConstraints { (make) in
+            
+            make.left.equalTo(containView).offset(8)
+            make.right.equalTo(containView).offset(-8)
+        }
+        
+        line1.snp_makeConstraints { (make) in
+            make.left.equalTo(containView)
+            make.right.equalTo(containView)
+            make.top.equalTo(contentLabel.snp_bottom).offset(10)
+            make.height.equalTo(1)
+        }
+        
+        addressTitleLabel.snp_makeConstraints { (make) in
+            make.top.equalTo(line1.snp_bottom).offset(10)
+            make.left.equalTo(contentLabel)
+            make.width.equalTo(70)
+        }
+        
+        addressButton.snp_makeConstraints { (make) in
+            make.left.equalTo(addressTitleLabel.snp_right).offset(5)
+            make.right.equalTo(containView).offset(-8)
+            make.centerY.equalTo(addressTitleLabel)
+        }
+        
+        tableView.snp_makeConstraints { (make) in
+            make.left.equalTo(addressButton)
+            make.width.equalTo(addressButton)
+            make.top.equalTo(addressButton.snp_bottom)
+            make.bottom.equalTo(containView)
+        }
+        
+        line2.snp_makeConstraints { (make) in
+            make.left.right.equalTo(line1)
+            make.top.equalTo(addressTitleLabel.snp_bottom).offset(10)
+            make.height.equalTo(1)
+        }
+        
+        payTypeLabel.snp_makeConstraints { (make) in
+            make.left.equalTo(contentLabel)
+            make.right.equalTo(contentLabel)
+            make.top.equalTo(line2).offset(10)
+        }
+        
+        aliPayButton.snp_makeConstraints { (make) in
+            make.left.equalTo(contentLabel)
+            make.top.equalTo(payTypeLabel.snp_bottom).offset(10)
+        }
+        
+        weixinPayButton.snp_makeConstraints { (make) in
+            make.left.equalTo(aliPayButton.snp_right).offset(20)
+            make.top.equalTo(aliPayButton)
+            make.right.equalTo(contentLabel)
+            make.width.equalTo(aliPayButton)
+        }
+        
+        payButton.snp_makeConstraints { (make) in
+            make.left.equalTo(contentLabel)
+            make.right.equalTo(contentLabel)
+            make.top.equalTo(aliPayButton.snp_bottom).offset(10)
+            make.height.equalTo(25)
+        }
+        
+        closeButton.snp_makeConstraints { (make) in
+            make.left.equalTo(payButton)
+            make.right.equalTo(payButton)
+            make.top.equalTo(payButton.snp_bottom).offset(10)
+            make.height.equalTo(payButton)
+        }
+        
+        
+    }
+    
+    private let containView = Constants.containView()
+    
+    private let contentLabel: UILabel = {
+        let view = UILabel()
+        view.numberOfLines = 0
+        view.font = Constants.mediumFont
+        
+        let text1: NSMutableAttributedString = NSMutableAttributedString(string: "尊敬的乘客，由于乘车卡是由其他厂商代工制作，需要收取工本费：30元。", attributes: [NSForegroundColorAttributeName: Constants.blackWordColor])
+        let text2: NSMutableAttributedString = NSMutableAttributedString(string: "不支持退款。", attributes: [NSForegroundColorAttributeName: Constants.redWordColor])
+        text1.appendAttributedString(text2)
+        view.attributedText = text1
+        
+        return view
+    } ()
+    
+    private let line1 = Constants.splitLine()
+    
+    private let addressTitleLabel: UILabel = {
+        let view = UILabel()
+        view.text = "通讯地址"
+        return view
+    } ()
+    
+    private let addressButton: UIButton = {
+        let view = UIButton()
+        view.titleLabel?.font = Constants.smallFont
+        view.layer.borderWidth = 1
+        view.layer.borderColor = Constants.yellowWordColor.CGColor
+        view.setTitleColor(Constants.blackWordColor, forState: .Normal)
+        return view
+    } ()
+    
+    private let tableView: UITableView = {
+        let view = UITableView()
+        view.rowHeight = 44
+        view.hidden = true
+        return view
+    } ()
+    
+    private let line2 = Constants.splitLine()
+    
+    private let payTypeLabel: UILabel = {
+        let view = UILabel()
+        view.text = "付款方式："
+        return view
+    } ()
+    
+    private let aliPayButton: UIButton = {
+        let view = UIButton()
+        view.setTitle("支付宝", forState: .Normal)
+        view.titleLabel?.font = Constants.smallFont
+        view.layer.borderWidth = 1
+        view.layer.borderColor = Constants.yellowWordColor.CGColor
+        view.tag = 0
+        view.backgroundColor = Constants.yellowWordColor
+        view.setTitleColor(Constants.whiteWordColor, forState: .Normal)
+        return view
+    } ()
+    
+    private let weixinPayButton: UIButton = {
+        let view = UIButton()
+        view.setTitle("微信支付", forState: .Normal)
+        view.layer.borderWidth = 1
+        view.layer.borderColor = Constants.yellowWordColor.CGColor
+        view.tag = 1
+        view.titleLabel?.font = Constants.smallFont
+        view.backgroundColor = Constants.whiteBGColor
+        view.setTitleColor(Constants.yellowWordColor, forState: .Normal)
+        return view
+    } ()
+    
+    let payButton: UIButton = {
+        let btn: UIButton = UIButton()
+        btn.setTitle("支付工本费", forState: .Normal)
+        btn.setTitleColor(Constants.whiteWordColor, forState: .Normal)
+        btn.titleLabel?.font = Constants.superSmallFont
+        btn.layer.cornerRadius = 16
+        btn.setBackgroundImage(UIImage(named: "btn_login_nor"), forState: .Normal)
+        return btn
+    } ()
+    
+    let closeButton: UIButton = {
+        let btn: UIButton = UIButton()
+        btn.setTitle("关闭", forState: .Normal)
+        btn.titleLabel?.font = Constants.superSmallFont
+        btn.setTitleColor(Constants.whiteWordColor, forState: .Normal)
+        btn.layer.cornerRadius = 16
+        btn.setBackgroundImage(UIImage(named: "btn_login_nor"), forState: .Normal)
+        btn.setBackgroundImage(UIImage(named: "btn_login_pre"), forState: .Highlighted)
+        return btn
+    } ()
+}

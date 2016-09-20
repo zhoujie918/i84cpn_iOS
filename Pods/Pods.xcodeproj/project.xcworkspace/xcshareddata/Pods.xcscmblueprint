@@ -1,0 +1,25 @@
+{
+  "DVTSourceControlWorkspaceBlueprintPrimaryRemoteRepositoryKey" : "28431b5e-8cdf-594f-8914-935d99f1fe66++6563",
+  "DVTSourceControlWorkspaceBlueprintWorkingCopyRepositoryLocationsKey" : {
+    "28431b5e-8cdf-594f-8914-935d99f1fe66++6563" : {
+
+    }
+  },
+  "DVTSourceControlWorkspaceBlueprintWorkingCopyStatesKey" : {
+    "28431b5e-8cdf-594f-8914-935d99f1fe66++6563" : 0
+  },
+  "DVTSourceControlWorkspaceBlueprintIdentifierKey" : "5CC426F0-B962-41D6-BC1A-BA62C83FCF74",
+  "DVTSourceControlWorkspaceBlueprintWorkingCopyPathsKey" : {
+    "28431b5e-8cdf-594f-8914-935d99f1fe66++6563" : "i84cpn_iOS\/"
+  },
+  "DVTSourceControlWorkspaceBlueprintNameKey" : "Pods",
+  "DVTSourceControlWorkspaceBlueprintVersion" : 204,
+  "DVTSourceControlWorkspaceBlueprintRelativePathToProjectKey" : "Pods\/Pods.xcodeproj",
+  "DVTSourceControlWorkspaceBlueprintRemoteRepositoriesKey" : [
+    {
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositoryURLKey" : "https:\/\/192.168.1.250\/svn\/src",
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositorySystemKey" : "com.apple.dt.Xcode.sourcecontrol.Subversion",
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositoryIdentifierKey" : "28431b5e-8cdf-594f-8914-935d99f1fe66++6563"
+    }
+  ]
+}

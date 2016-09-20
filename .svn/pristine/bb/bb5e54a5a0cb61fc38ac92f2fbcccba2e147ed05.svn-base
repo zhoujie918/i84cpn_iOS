@@ -1,0 +1,96 @@
+//
+//  CPOrdersTableViewCell.swift
+//  i84cpn
+//
+//  Created by BenjaminRichard on 16/5/25.
+//  Copyright © 2016年 5i84. All rights reserved.
+//
+
+import UIKit
+
+class CPOrdersTableViewCell: UITableViewCell {
+
+    required init(coder aDecoder: NSCoder) {
+        super.init(coder: aDecoder)!
+    }
+    override init(style: UITableViewCellStyle, reuseIdentifier: String?) {
+        super.init(style: style, reuseIdentifier: reuseIdentifier)
+        self.addSubview(routeLabel)
+        self.addSubview(detailLabel)
+        self.addSubview(stateLabel)
+        self.addSubview(line)
+    }
+    
+    override func layoutSubviews() {
+        routeLabel.snp_makeConstraints { (make) in
+            make.top.left.equalTo(20)
+        }
+        
+        detailLabel.snp_makeConstraints { (make) in
+            make.left.equalTo(routeLabel)
+            make.top.equalTo(routeLabel.snp_bottom).offset(8)
+        }
+        
+        stateLabel.snp_makeConstraints { (make) in
+            make.centerY.equalTo(self)
+            make.width.equalTo(50)
+            make.height.equalTo(25)
+            make.right.equalTo(-20)
+        }
+        
+        line.snp_makeConstraints { (make) in
+            make.left.equalTo(self).offset(20)
+            make.right.equalTo(self).offset(-20)
+            make.bottom.equalTo(self)
+            make.height.equalTo(1)
+        }
+    }
+    
+    func setStatus(status: Int32) {
+        switch status {
+        case 0:
+            stateLabel.text = "待支付"
+        case 1:
+            stateLabel.text = "已支付"
+        case 2:
+            stateLabel.text = "已过期"
+        case 3:
+            stateLabel.text = "已取消"
+        case 4:
+            stateLabel.text = "改签中"
+        case 5:
+            stateLabel.text = "退款中"
+        case 6:
+            stateLabel.text = "已改签"
+        case 7:
+            stateLabel.text = "已退款"
+        default:
+            break
+        }
+    }
+    
+    let routeLabel: UILabel = {
+        let view = UILabel()
+        view.font = Constants.smallFont
+        return view
+    } ()
+    
+    let detailLabel: UILabel = {
+        let view = UILabel()
+        view.font = Constants.smallFont
+        return view
+    } ()
+    
+    let stateLabel: UILabel = {
+        let view = UILabel()
+        view.textColor = Constants.paleWordColor
+        view.textAlignment = NSTextAlignment.Center
+        view.font = Constants.smallFont
+        view.textColor = Constants.yellowWordColor
+        view.layer.borderColor = Constants.yellowWordColor.CGColor
+        view.layer.borderWidth = 1
+        return view
+    } ()
+    
+    let line = Constants.splitLine()
+}

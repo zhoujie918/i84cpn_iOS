@@ -1,0 +1,130 @@
+//
+//  CPAddressManangeViewController.swift
+//  i84cpn
+//
+//  Created by BenjaminRichard on 16/5/16.
+//  Copyright © 2016年 5i84. All rights reserved.
+//
+
+import UIKit
+
+class CPAddressManangeViewController: CMBaseViewController, UITableViewDataSource, UITableViewDelegate {
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        title = "通讯地址管理"
+        view.addSubview(addressManageView)
+        addressManageView.tableView.dataSource = self
+        addressManageView.tableView.delegate = self
+        addressManageView.tableView.registerClass(CPAddressManageTableViewCell.self, forCellReuseIdentifier: cellId)
+        addressManageView.frame = view.frame
+        
+        addressManageView.addAddressButton.addTarget(self, action: #selector(addAddress), forControlEvents: .TouchUpInside)
+    }
+    
+    override func viewWillAppear(animated: Bool) {
+        super.viewWillAppear(animated)
+        getAddressList()
+    }
+    
+    override func viewDidAppear(animated: Bool) {
+        super.viewDidAppear(animated)
+        
+    }
+    
+    func getAddressList() {
+        CPAFHTTPSessionManager.postWithUrlString(Constants.userInfoURL, parameter: Constants.getAddressList(), progressBlock: { (progress) in
+            
+            }, successBlock: { (respondData) in
+                let dic:NSDictionary = respondData as! NSDictionary
+                let rsp: Bool = dic["success"] as! Bool
+                if rsp {
+                    self.dataArray = dic["result"] as? NSArray
+                    self.addressManageView.tableView.reloadData()
+                } else {
+                    Constants.dPrint(dic)
+                    let errorCode = dic.objectForKey("errorCode") as? String
+                    if errorCode == "00001" {
+                        CPUserModel.clearData()
+                        CPUserModel.userLogin()
+                    }
+                }
+            }, failureBlock: { (error) in
+                print(error)
+        })
+    }
+    
+    // 事件响应方法
+    func addAddress(button: UIButton) {
+        let vc = CPAddAddressViewController()
+        self.navigationController?.pushViewController(vc, animated: true)
+        vc.hideNavi = true
+    }
+    
+    func alertDismiss() {
+        self.alertView?.dismissWithClickedButtonIndex(0, animated: true)
+    }
+    
+    // delegate
+    func tableView(tableView: UITableView, didSelectRowAtIndexPath indexPath: NSIndexPath) {
+        let uasId = dataArray![indexPath.row].objectForKey("uasId")!
+        let s:String = String(uasId)
+        CPAFHTTPSessionManager.postWithUrlString(Constants.userInfoURL, parameter: Constants.setDefaultAddParamWithUasId(s), progressBlock: { (progress) in
+            
+            }, successBlock: { (respondData) in
+                let dic:NSDictionary = respondData as! NSDictionary
+                let rsp: Bool = dic["success"] as! Bool
+                let msg: String
+                if rsp {
+                    let objData: NSDictionary = dic["result"] as! NSDictionary
+                    if objData.objectForKey("success") as! Bool {
+                        msg = "修改成功"
+                        if indexPath.row != self.defaultNum {
+                            let index: NSIndexPath = NSIndexPath(forRow: self.defaultNum, inSection: indexPath.section)
+                            if tableView.cellForRowAtIndexPath(index) != nil &&
+                            tableView.cellForRowAtIndexPath(indexPath) != nil {
+                                var cell = tableView.cellForRowAtIndexPath(index) as! CPAddressManageTableViewCell
+                                cell.setDefaultButtonImage(false)
+                                self.defaultNum = indexPath.row
+                                cell = tableView.cellForRowAtIndexPath(indexPath) as! CPAddressManageTableViewCell
+                                cell.setDefaultButtonImage(true)
+                            }
+                            
+                        }
+                    } else {
+                        msg = (objData.objectForKey("msg") as? String)!
+                    }
+                    self.alertView = UIAlertView(title: "提示", message: msg, delegate: self, cancelButtonTitle: nil)
+                    self.alertView!.show()
+                    NSTimer.scheduledTimerWithTimeInterval(1, target: self, selector: #selector(self.alertDismiss), userInfo: nil, repeats: false)
+                }
+            }, failureBlock: { (error) in
+                print(error)
+        })
+    }
+    
+    
+    // MAKR:-- datasource
+    func numberOfSectionsInTableView(tableView: UITableView) -> Int {
+        return 1
+    }
+    
+    func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        if dataArray == nil {
+            return 0
+        }
+        return dataArray!.count
+    }
+    
+    func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
+        let cell: CPAddressManageTableViewCell = tableView.dequeueReusableCellWithIdentifier(cellId) as!  CPAddressManageTableViewCell
+        cell.setPropertyWithAddress(dataArray![indexPath.row].objectForKey("address") as! String, isDefault: dataArray![indexPath.row].objectForKey("isDef") as! Bool)
+        return cell
+    }
+    
+    private let addressManageView = CPAddressManagerView()
+    private let cellId = "addressManageCell"
+    private var dataArray: NSArray?
+    private var alertView: UIAlertView?
+    private var defaultNum: Int = 0
+}

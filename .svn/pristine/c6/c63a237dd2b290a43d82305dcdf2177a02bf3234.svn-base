@@ -1,0 +1,69 @@
+//
+//  CPRelavanceTableViewCell.swift
+//  i84cpn
+//
+//  Created by BenjaminRichard on 16/6/13.
+//  Copyright © 2016年 5i84. All rights reserved.
+//
+
+import UIKit
+
+class CPRelavanceTableViewCell: UITableViewCell {
+
+    required init(coder aDecoder: NSCoder) {
+        super.init(coder: aDecoder)!
+    }
+    override init(style: UITableViewCellStyle, reuseIdentifier: String?) {
+        super.init(style: style, reuseIdentifier: reuseIdentifier)
+        self.addSubview(titleLabel)
+        self.addSubview(detailLabel)
+        self.addSubview(stateLabel)
+    }
+    
+    override func layoutSubviews() {
+        titleLabel.snp_makeConstraints { (make) in
+            make.top.left.equalTo(20)
+            make.right.equalTo(stateLabel.snp_left).offset(-10)
+        }
+        
+        detailLabel.snp_makeConstraints { (make) in
+            make.left.equalTo(titleLabel)
+            make.top.equalTo(titleLabel.snp_bottom).offset(8)
+            make.right.equalTo(stateLabel.snp_left).offset(-10)
+        }
+        
+        stateLabel.snp_makeConstraints { (make) in
+            make.centerY.equalTo(self)
+            make.width.equalTo(50)
+            make.height.equalTo(25)
+            make.right.equalTo(-20)
+        }
+    }
+    
+    
+    
+    let titleLabel: UILabel = {
+        let view = UILabel()
+        view.font = Constants.mediumFont
+        view.numberOfLines = 0
+        return view
+    } ()
+    
+    let detailLabel: UILabel = {
+        let view = UILabel()
+        view.font = Constants.smallFont
+        view.textColor = Constants.paleWordColor
+        return view
+    } ()
+    
+    let stateLabel: UILabel = {
+        let view = UILabel()
+        view.textColor = Constants.paleWordColor
+        view.textAlignment = NSTextAlignment.Center
+        view.font = Constants.smallFont
+        view.textColor = Constants.yellowWordColor
+        view.layer.borderColor = Constants.yellowWordColor.CGColor
+        view.layer.borderWidth = 1
+        return view
+    } ()
+}

@@ -1,0 +1,118 @@
+//
+//  CPRetrievePasswordViewController.swift
+//  i84cpn
+//
+//  Created by BenjaminRichard on 16/5/7.
+//  Copyright © 2016年 5i84. All rights reserved.
+//
+
+import UIKit
+
+class CPRetrievePasswordViewController: UIViewController, GetSMSCodeButtonDelegate {
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        self.title = "忘记密码"
+        self.view = retrievePasswordView
+        retrievePasswordView.SMSButton.delegate = self
+    }
+    
+    override func viewWillAppear(animated: Bool) {
+        super.viewWillAppear(animated)
+        retrievePasswordView.frame = view.frame
+        
+    }
+    
+    override func viewDidAppear(animated: Bool) {
+        super.viewDidAppear(animated)
+        retrievePasswordView.showPasswordButton.addTarget(self, action: #selector(passwordShow), forControlEvents: .TouchUpInside)
+        retrievePasswordView.signUpButton.addTarget(self, action: #selector(submit), forControlEvents: .TouchUpInside)
+    }
+    
+    //MARK: -- 事件响应方法
+    func getSMSCode() {
+        let phoneNum: String = retrievePasswordView.phoneNumTextField.text!
+        if phoneNum.characters.count == 0 {
+            retrievePasswordView.tipLabel.text = "手机号少于11位或格式错误"
+            retrievePasswordView.tipLabel.hidden = false
+            retrievePasswordView.SMSButton.remainingSeconds = 0
+        } else {
+            retrievePasswordView.tipLabel.hidden = true
+            CPAFHTTPSessionManager.postWithUrlString(Constants.getSMSCodeOfForgetPasswordURL, parameter: Constants.getSMSCodeOfForgetPasswordWithPhoneNum(phoneNum), progressBlock: { (progress) in
+                
+                }, successBlock: { (respondData) in
+                    if respondData != nil {
+                        let dic:NSDictionary = respondData as! NSDictionary
+                        if dic.objectForKey("success") as! Bool == true {
+
+                        } else {
+                            let msg = dic.objectForKey("msg") as! String
+                            self.alertView = UIAlertView(title: "提示", message: "短信获取失败! 错误码" + msg, delegate: self, cancelButtonTitle: "确定")
+                            self.alertView?.show()
+                        }
+                    }
+                }, failureBlock: { (error) in
+                    print(error)
+            })
+        }
+    }
+    
+    func passwordShow(button: UIButton) {
+        if showPassword {
+            showPassword = false
+            retrievePasswordView.showPasswordButton.setImage(UIImage(named: "icon_close"), forState: .Normal)
+        } else {
+            showPassword = true
+            retrievePasswordView.showPasswordButton.setImage(UIImage(named: "icon_open"), forState: .Normal)
+        }
+        retrievePasswordView.passwordTextField.secureTextEntry = !showPassword
+    }
+    
+    func submit(button: UIButton) {
+        let phoneNum: String = retrievePasswordView.phoneNumTextField.text!
+        let SMSCode: String = retrievePasswordView.SMSTextField.text!
+        let newPassword: String = retrievePasswordView.passwordTextField.text!
+        
+        if phoneNum.characters.count == 0 {
+            retrievePasswordView.tipLabel.text = "手机号少于11位或格式错误"
+            retrievePasswordView.tipLabel.hidden = false
+        } else if SMSCode.characters.count == 0 {
+            retrievePasswordView.tipLabel.text = "验证码错误，请再次输入或重新获取"
+            retrievePasswordView.tipLabel.hidden = false
+        } else {
+            retrievePasswordView.tipLabel.hidden = true
+            if newPassword.characters.count < 6 {
+                alertView = UIAlertView(title: "提示", message: "新的密码少于6位, 请重新输入", delegate: self, cancelButtonTitle: "确定")
+                alertView?.show()
+            } else {
+                CPAFHTTPSessionManager.postWithUrlString(Constants.resetPasswordURL, parameter: Constants.resetPasswordParamWithPhoneNum(phoneNum, SMSCode: SMSCode, newPassword: newPassword), progressBlock: nil, successBlock: { (respondData) in
+                        let dic:NSDictionary = respondData as! NSDictionary
+                        let rsp: Bool = dic["success"] as! Bool
+                        if rsp {
+                            let objData = dic["result"]
+                            let suc: Bool = objData!["success"] as! Bool
+                            var msg: String?
+                            if suc {
+                                msg = "新密码设置成功"
+                                self.navigationController?.popViewControllerAnimated(true)
+                            } else {
+                                msg = objData!["msg"] as? String
+                            }
+                            self.alertView = UIAlertView(title: "提示", message: msg, delegate: self, cancelButtonTitle: "确定")
+                            self.alertView?.show()
+                            
+                        }
+                    }, failureBlock: { (error) in
+                        print(error)
+                })
+            }
+        }
+    }
+    
+    //MARK: --代理方法
+    
+    //MARK: --属性
+    var showPassword: Bool = false
+    let retrievePasswordView: CPRetrievePasswordView = CPRetrievePasswordView()
+    var alertView: UIAlertView?
+}

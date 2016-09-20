@@ -1,0 +1,37 @@
+//
+//  CPFAQsView.swift
+//  i84cpn
+//
+//  Created by BenjaminRichard on 16/5/19.
+//  Copyright © 2016年 5i84. All rights reserved.
+//
+
+import UIKit
+
+class CPFAQsView: UIView {
+
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        self.backgroundColor = Constants.paleBGColor
+        self.addSubview(tableView)
+    }
+    
+    required init?(coder aDecoder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    override func layoutSubviews() {
+        tableView.snp_makeConstraints { (make) in
+            make.left.right.equalTo(self)
+            make.top.equalTo(20)
+            make.height.equalTo(176)
+        }
+    }
+    
+    let tableView: UITableView = {
+        let view = UITableView()
+        view.backgroundColor = Constants.paleBGColor
+//        view.contentInset = UIEdgeInsetsMake(-65, 0, 0, 0)
+        return view
+    } ()
+}

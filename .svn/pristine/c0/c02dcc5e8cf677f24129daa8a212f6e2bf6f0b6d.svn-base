@@ -1,0 +1,183 @@
+//
+//  CPUnPaidDetailViewController.swift
+//  i84cpn
+//
+//  Created by BenjaminRichard on 16/5/26.
+//  Copyright © 2016年 5i84. All rights reserved.
+//
+
+import UIKit
+
+class CPUnPaidDetailViewController: CMBaseViewController, UnPaidOneLineDetailViewDelegate {
+
+    var hideNavi = false
+    
+    
+    override func viewDidLoad() {
+        super.viewDidLoad()
+//        title = "待付款"
+        
+        view.addSubview(unPaidOneLineDetailView)
+        view.addSubview(unPaidTwoLineDetailView)
+//        if hideNavi == true {
+//            unPaidTwoLineDetailView.frame = CGRectMake(0, 64, SCREEN_WIDTH, SCREEN_HEIGHT)
+//            unPaidOneLineDetailView.frame = CGRectMake(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT)
+//        }else{
+            unPaidTwoLineDetailView.frame = view.frame
+            unPaidOneLineDetailView.frame = view.frame
+//        }
+        
+        unPaidOneLineDetailView.delegate = self
+    }
+    
+    
+    override func viewWillAppear(animated: Bool) {
+        super.viewWillAppear(animated)
+        getData()
+    }
+    
+    override func viewDidAppear(animated: Bool) {
+        super.viewDidAppear(animated)
+        unPaidOneLineDetailView.payButton.addTarget(self, action: #selector(pay), forControlEvents: .TouchUpInside)
+        unPaidTwoLineDetailView.payButton.addTarget(self, action: #selector(pay), forControlEvents: .TouchUpInside)
+        
+//        unPaidOneLineDetailView.stateButton.addTarget(self, action: #selector(lookDetail1), forControlEvents: .TouchUpInside)
+//        unPaidTwoLineDetailView.stateButton1.addTarget(self, action: #selector(lookDetail1), forControlEvents: .TouchUpInside)
+//        unPaidTwoLineDetailView.stateButton2.addTarget(self, action: #selector(lookDetail2), forControlEvents: .TouchUpInside)
+        
+        let press = UITapGestureRecognizer(target: self, action: #selector(lookDetail1))
+        press.numberOfTapsRequired = 1
+        let press1 = UITapGestureRecognizer(target: self, action: #selector(lookDetail2))
+        press1.numberOfTapsRequired = 1
+        unPaidTwoLineDetailView.stateButton1.addGestureRecognizer(press)
+        unPaidTwoLineDetailView.stateButton2.addGestureRecognizer(press1)
+        
+        
+        unPaidOneLineDetailView.scrollView.contentSize = CGSizeMake(Constants.screenWidth, unPaidOneLineDetailView.payButton.frame.origin.y + unPaidOneLineDetailView.payButton.frame.height + 100)
+        unPaidTwoLineDetailView.scrollView.contentSize = CGSizeMake(Constants.screenWidth, unPaidTwoLineDetailView.payButton.frame.origin.y + unPaidTwoLineDetailView.payButton.frame.height + 100)
+    }
+    
+    override func viewDidDisappear(animated: Bool) {
+    }
+    
+    func lookDetail1() {
+        // 跳转到线路详情
+        let vc=CPRealTimeCarController()
+        vc.stationList = stationList1
+//        Constants.dPrint(stationList1)
+        vc.isLineInfo=true
+        self.navigationController?.pushViewController(vc, animated: true)
+    }
+    func lookDetail2() {
+        let vc=CPRealTimeCarController()
+        vc.stationList = stationList2
+//        Constants.dPrint(stationList2)
+        vc.isLineInfo=true
+        self.navigationController?.pushViewController(vc, animated: true)
+    }
+
+    //支付
+    func pay(button: UIButton) {
+        if lineDetailData != nil {
+            //支付参数 （lineId,classId为后续选座接口备用,必传）
+            let orderType = lineDetailData?.objectForKey("isOrderGroup") as! Int
+            let param:NSDictionary = ["action":"pay_alipay","orderNo":lineDetailData!.objectForKey("orderNo")!,"sysType":"IOS","orderType":orderType,"lineId":lineId1,"classId":classId1]
+            //创建支付宝支付Model单例
+            let alipayModel = CPAlipayModel.shareCPAlipayModel()
+            alipayModel.setValuesForKeysWithDictionary(param as! [String : AnyObject])
+            print(param)
+            //调起支付模块
+            
+            [alipayModel.alipaySuccessBlock({ (responseObject) in
+                self.alipaySuccess()
+                
+                }, failureBlock: { (error) in
+                    print(error)
+                    self.alipayFail()
+            })];
+        }
+        
+    }
+    
+    //支付成功
+    func alipaySuccess() {
+        print("支付成功")
+        let payVC = CPPayResultController()
+        self.navigationController?.pushViewController(payVC, animated: true)
+    }
+    
+    //支付失败
+    func alipayFail() {
+        print("支付失败")
+        let payFailVC = CPPayFailResultController()
+        self.navigationController?.pushViewController(payFailVC, animated: true)
+    }
+    
+    
+    
+    
+    
+    func getData() {
+        CPAFHTTPSessionManager.postWithUrlString(Constants.userInfoURL, parameter: Constants.getOrderDetail(orderId), progressBlock: { (progress) in
+            
+            }, successBlock: { (respondData) in
+                let dic:NSDictionary = respondData as! NSDictionary
+                let rsp: Bool = dic["success"] as! Bool
+                if rsp {
+                    var objData: NSDictionary = dic["result"] as! NSDictionary
+                    objData = objData.objectForKey("result") as! NSDictionary
+                    let s: NSArray = objData.objectForKey("lineList") as! NSArray
+                    if s.count == 1 {
+                        self.unPaidOneLineDetailView.hidden = false
+                        self.unPaidTwoLineDetailView.hidden = true
+                        self.lineDetailData = objData
+                        let ar: NSArray = objData.objectForKey("lineList") as! NSArray
+                        self.classId1 = ar[0].objectForKey("classId") as! Int
+                        self.lineId1 = ar[0].objectForKey("lineId") as! Int
+                        self.issueId1 = ar[0].objectForKey("issueId") as! Int
+                        self.stationList1 = CPPaidOrderDetailModel.getLineDetailData(ar[0] as! NSDictionary).stationList
+//                        self.stationList1 = ar[0].objectForKey("stationList") as! Array<StationList>
+                        self.unPaidOneLineDetailView.reloadData(objData)
+//                        Constants.dPrint(self.unPaidOneLineDetailView.stateButton.frame)
+                        self.unPaidOneLineDetailView.stateButton.frame.origin.y = self.unPaidOneLineDetailView.stateButton.frame.origin.y
+                    } else if s.count > 1 {
+                        self.unPaidTwoLineDetailView.reloadData(objData)
+                        self.lineDetailData = objData
+                        let ar: NSArray = objData.objectForKey("lineList") as! NSArray
+                        self.classId1 = ar[0].objectForKey("classId") as! Int
+                        self.lineId1 = ar[0].objectForKey("lineId") as! Int
+                        self.issueId1 = ar[0].objectForKey("issueId") as! Int
+                        self.stationList1 = CPPaidOrderDetailModel.getLineDetailData(ar[0] as! NSDictionary).stationList
+                        
+                        self.classId2 = ar[1].objectForKey("classId") as! Int
+                        self.lineId2 = ar[1].objectForKey("lineId") as! Int
+                        self.issueId2 = ar[1].objectForKey("issueId") as! Int
+                        self.stationList2 = CPPaidOrderDetailModel.getLineDetailData(ar[1] as! NSDictionary).stationList
+                        self.unPaidOneLineDetailView.hidden = true
+                        self.unPaidTwoLineDetailView.hidden = false
+                    }
+                } else {
+                    if dic.objectForKey("msg") != nil {
+                        let alertView = UIAlertView(title: "提示", message: dic.objectForKey("msg") as? String, delegate: self, cancelButtonTitle: "确定")
+                        alertView.show()
+                    }
+                }
+            }, failureBlock: { (error) in
+                print(error)
+        })
+    }
+    
+    var orderId:Int = 0
+    
+    private var issueId1: Int = 0
+    private var lineId1: Int = 0
+    private var classId1:Int = 0
+    private var issueId2: Int = 0
+    private var lineId2: Int = 0
+    private var classId2: Int = 0
+    private var stationList1: [StationList]!
+    private var stationList2: [StationList]!
+    private var lineDetailData:NSDictionary?
+    private let unPaidOneLineDetailView = CPUnPaidOneLineDetailView()
+    private let unPaidTwoLineDetailView = CPUnPaidTwoLineDetailView()
+}

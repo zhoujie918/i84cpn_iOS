@@ -1,0 +1,128 @@
+//
+//  CPMessageRemindingModel.swift
+//  i84cpn
+//
+//  Created by BenjaminRichard on 16/6/12.
+//  Copyright © 2016年 5i84. All rights reserved.
+//
+
+import UIKit
+
+class CPMessageRemindingModel: NSObject {
+    
+    class CMessageRemindingTypeModel: NSObject {
+        var msgType: Int?   // 消息类型
+        var msgName: String?    // 消息名称
+        var msgCode: String?    // 消息code
+    }
+    
+    class CMessageRemindingListModel: NSObject {
+        var cmrId: Int? // id
+        var content: String? // 显示内容
+        var msgType: Int? // 消息类型
+        var createTime: String? // 消息创建时间
+        var isRead: Bool? // 是否已读
+        var applyStatus: Int? // 处理状态code
+        var applyMsg: String? // 处理状态
+    }
+    
+    var typeArray = Array<CMessageRemindingTypeModel>()
+    var list1 = Array<CMessageRemindingListModel>()
+    var list2 = Array<CMessageRemindingListModel>()
+    var list3 = Array<CMessageRemindingListModel>()
+    var list4 = Array<CMessageRemindingListModel>()
+    
+    
+    func loadData() {
+        getTypeArray()
+    }
+    
+    private func getTypeArray() {
+        typeArray.removeAll()
+        CPAFHTTPSessionManager.postWithUrlString(Constants.noauthApiURL, parameter: Constants.getMsgRemindingType(), progressBlock: { (progress) in
+            
+            }, successBlock: {[weak self]  (respondData) in
+                let dic:NSDictionary = respondData as! NSDictionary
+                let rsp: Bool = dic["success"] as! Bool
+                if rsp {
+                    let objData: NSDictionary = dic["result"] as! NSDictionary
+                    if objData.objectForKey("success") as! Bool {
+                        let list = objData["types"] as! NSArray
+                        for dic in list {
+                            let type = CMessageRemindingTypeModel()
+                            type.msgType = dic.objectForKey("msgType") as? Int
+                            type.msgName = dic.objectForKey("msgName") as? String
+                            type.msgCode = dic.objectForKey("msgCode") as? String
+                            if let actualSelf = self {
+                                actualSelf.typeArray.append(type)
+                            }
+                        }
+                        if let actualSelf = self {
+                            actualSelf.getList()
+                        }
+                    }
+                } else {
+                    
+                }
+            }, failureBlock: { (error) in
+                print(error)
+        })
+    }
+    
+    
+    private func getList() {
+        if self.typeArray.count == 0 {
+            return
+        }
+        list1.removeAll()
+        list2.removeAll()
+        list3.removeAll()
+        list4.removeAll()
+        
+        for i in 0 ..< self.typeArray.count {
+            CPAFHTTPSessionManager.postWithUrlString(Constants.userInfoURL, parameter: Constants.getMsgRemindingListWithType(self.typeArray[i].msgType!), progressBlock: { (progress) in
+                
+                }, successBlock: { (respondData) in
+                    let dic:NSDictionary = respondData as! NSDictionary
+                    let rsp: Bool = dic["success"] as! Bool
+                    if rsp {
+                        let objData: NSDictionary = dic["result"] as! NSDictionary
+                        if objData.objectForKey("success") as! Bool {
+                            let list = objData["list"] as! NSArray
+                            for dic in list {
+//                                Constants.dPrint(dic.objectForKey("cmrId"))
+//                                let modelTool = DictModelManager.sharedManager
+//                                let obj = modelTool.objectWithDictionary(dic as! NSDictionary , cls: CMessageRemindingListModel.self) as? CMessageRemindingListModel
+                                let obj = CMessageRemindingListModel()
+                                obj.cmrId = dic.objectForKey("cmrId") as? Int
+                                obj.content = dic.objectForKey("content") as? String
+                                obj.msgType = dic.objectForKey("msgType") as? Int
+                                obj.createTime = dic.objectForKey("createTime") as? String
+                                obj.isRead = dic.objectForKey("isRead") as? Bool
+                                obj.applyStatus = dic.objectForKey("applyStatus") as? Int
+                                obj.applyMsg = dic.objectForKey("applyMsg") as? String
+
+                                switch i {
+                                case 0:
+                                    self.list1.append(obj)
+                                case 1:
+                                    self.list2.append(obj)
+                                case 2:
+                                    self.list3.append(obj)
+                                case 3:
+                                    self.list4.append(obj)
+                                default:
+                                    break
+                                }
+                            }
+                        }
+                    }
+                }, failureBlock: { (error) in
+                    print(error)
+            })
+        }
+    }
+    
+    
+    
+}

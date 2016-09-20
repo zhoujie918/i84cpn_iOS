@@ -1,0 +1,100 @@
+//
+//  CPMessageRemindingModel.swift
+//  i84cpn
+//
+//  Created by BenjaminRichard on 16/6/12.
+//  Copyright © 2016年 5i84. All rights reserved.
+//
+
+import UIKit
+
+class CPMessageRemindingModel: NSObject {
+
+    class CMessageRemindingTypeModel: NSObject {
+        var msgType: Int?   // 消息类型
+        var msgName: String?    // 消息名称
+        var msgCode: String?    // 消息code
+    }
+    
+    class CMessageRemindingListModel: NSObject {
+        var cmrId: Int? // id
+        var content: String? // 显示内容
+        var msgType: Int? // 消息类型
+        var createTime: String? // 消息创建时间
+        var isRead: Bool? // 是否已读
+        var applyStatus: Int? // 处理状态code
+        var applyMsg: String? // 处理状态
+    }
+    
+    var typeArray:[CMessageRemindingTypeModel]?
+    var list1:[CMessageRemindingListModel]?
+    var list2:[CMessageRemindingListModel]?
+    var list3:[CMessageRemindingListModel]?
+    var list4:[CMessageRemindingListModel]?
+    var list:[[CMessageRemindingListModel]]?
+    
+    func loadData() {
+        getTypeArray()
+    }
+    
+    func getTypeArray() {
+        CPAFHTTPSessionManager.postWithUrlString(Constants.noauthApiURL, parameter: Constants.getMsgRemindingType(), progressBlock: { (progress) in
+            
+            }, successBlock: {[weak self]  (respondData) in
+                let dic:NSDictionary = respondData as! NSDictionary
+                let rsp: Bool = dic["success"] as! Bool
+                if rsp {
+                    let objData: NSDictionary = dic["result"] as! NSDictionary
+                    if objData.objectForKey("success") as! Bool {
+                        let list = objData["types"] as! NSArray
+                        for dic in list {
+                            let type = CMessageRemindingTypeModel()
+                            type.msgType = dic.objectForKey("msgType") as? Int
+                            type.msgName = dic.objectForKey("msgName") as? String
+                            type.msgCode = dic.objectForKey("msgCode") as? String
+                            if let actualSelf = self {
+                                actualSelf.typeArray?.append(type)
+                            }
+                        }
+                        if let actualSelf = self {
+                            actualSelf.getList()
+                        }
+                    }
+                } else {
+                    
+                }
+            }, failureBlock: { (error) in
+                print(error)
+        })
+    }
+    
+    
+    func getList() {
+        if self.typeArray == nil || self.typeArray?.count == 0 {
+            return
+        }
+        
+        for i in 0 ..< self.typeArray!.count {
+            CPAFHTTPSessionManager.postWithUrlString(Constants.userInfoURL, parameter: Constants.getMsgRemindingListWithType(self.typeArray![i].msgType!), progressBlock: { (progress) in
+                
+                }, successBlock: { (respondData) in
+                    let dic:NSDictionary = respondData as! NSDictionary
+                    let rsp: Bool = dic["success"] as! Bool
+                    if rsp {
+                        let objData: NSDictionary = dic["result"] as! NSDictionary
+                        if objData.objectForKey("success") as! Bool {
+                            let list = objData["list"] as! NSArray
+                            for dic in list {
+                                let modelTool = DictModelManager.sharedManager
+                                let obj = modelTool.objectWithDictionary(dic as! NSDictionary , cls: CMessageRemindingListModel.self) as? CMessageRemindingListModel
+                                self.list![i].append(obj!)
+                            }
+                            Constants.dPrint(self.list![i])
+                        }
+                    }
+                }, failureBlock: { (error) in
+                    print(error)
+            })
+        }
+    }
+}

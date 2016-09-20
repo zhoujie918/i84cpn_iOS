@@ -1,0 +1,32 @@
+//
+//  CMBaseViewController.swift
+//  i84cpn
+//
+//  Created by BenjaminRichard on 16/6/13.
+//  Copyright © 2016年 5i84. All rights reserved.
+//
+
+import UIKit
+
+class CMBaseViewController: UIViewController {
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+//        self.automaticallyAdjustsScrollViewInsets = false
+        self.edgesForExtendedLayout = UIRectEdge.None
+        self.extendedLayoutIncludesOpaqueBars = false
+        self.modalPresentationCapturesStatusBarAppearance = false
+        let backBtn = UIBarButtonItem.init(image: UIImage(named: "icon_back"), style: UIBarButtonItemStyle.Done, target: self, action: #selector(popView))
+        self.navigationItem.leftBarButtonItem = backBtn
+        self.navigationController?.navigationBar.backgroundColor = Constants.whiteBGColor
+    }
+    
+    
+    func popView() {
+        navigationController?.popViewControllerAnimated(true)
+    }
+    
+    deinit {
+        Constants.dPrint("deinit \(self)")
+    }
+}

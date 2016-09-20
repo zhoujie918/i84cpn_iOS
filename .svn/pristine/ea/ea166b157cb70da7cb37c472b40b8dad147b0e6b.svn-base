@@ -1,0 +1,16 @@
+version: "Apple Swift version 2.2 (swiftlang-703.0.18.1 clang-703.0.29)"
+options: "1e7a8ee732c7670619c6d02fecc69bfa"
+build_time: [516966061, 465682000]
+inputs:
+  "/Users/zhoujie/Desktop/i84cpn_iOS/Pods/SnapKit/Source/Constraint.swift": [516358756, 0]
+  "/Users/zhoujie/Desktop/i84cpn_iOS/Pods/SnapKit/Source/ConstraintAttributes.swift": [516358756, 0]
+  "/Users/zhoujie/Desktop/i84cpn_iOS/Pods/SnapKit/Source/ConstraintDescription.swift": [516358756, 0]
+  "/Users/zhoujie/Desktop/i84cpn_iOS/Pods/SnapKit/Source/ConstraintItem.swift": [516358756, 0]
+  "/Users/zhoujie/Desktop/i84cpn_iOS/Pods/SnapKit/Source/ConstraintMaker.swift": [516358756, 0]
+  "/Users/zhoujie/Desktop/i84cpn_iOS/Pods/SnapKit/Source/ConstraintRelation.swift": [516358756, 0]
+  "/Users/zhoujie/Desktop/i84cpn_iOS/Pods/SnapKit/Source/Debugging.swift": [516358756, 0]
+  "/Users/zhoujie/Desktop/i84cpn_iOS/Pods/SnapKit/Source/EdgeInsets.swift": [516358756, 0]
+  "/Users/zhoujie/Desktop/i84cpn_iOS/Pods/SnapKit/Source/LayoutConstraint.swift": [516358756, 0]
+  "/Users/zhoujie/Desktop/i84cpn_iOS/Pods/SnapKit/Source/SnapKit.swift": [516358756, 0]
+  "/Users/zhoujie/Desktop/i84cpn_iOS/Pods/SnapKit/Source/View+SnapKit.swift": [516358756, 0]
+  "/Users/zhoujie/Desktop/i84cpn_iOS/Pods/SnapKit/Source/ViewController+SnapKit.swift": [516358756, 0]

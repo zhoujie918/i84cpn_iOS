@@ -1,0 +1,102 @@
+//
+//  CPMoeBusModel.swift
+//  i84cpn
+//
+//  Created by 爱巴士-余夏伟 on 16/6/13.
+//  Copyright © 2016年 5i84. All rights reserved.
+//
+
+import UIKit
+
+class CPMoeBusModel: NSObject,DictModelProtocol {
+
+    var list: [MoeBusComicList]?
+    var nameList = [String]()
+    
+    class func getComicListData(successClosure:(success: CPMoeBusModel?) -> Void , fail: failClosure) {
+        
+        CPAFHTTPSessionManager.postWithUrlString(Constants.noauthApiURL, parameter:["action":"get_cartoon_list"], progressBlock: nil, successBlock: { (response) in
+            let dicResponse : NSDictionary = response as! NSDictionary
+//            print("getComicListData:",dicResponse)
+            
+            if (dicResponse["success"]!).intValue == 1{
+                let dic = dicResponse["result"] as! NSDictionary
+                if  (dic["success"]!).intValue == 1{
+                    let modeltool = DictModelManager.sharedManager
+                    let model  = modeltool.objectWithDictionary(dic, cls: CPMoeBusModel.self) as? CPMoeBusModel
+                    if model?.list != nil{
+                        for name in (model?.list)! {
+                            model?.nameList.append(name.cciName!)
+                        }
+                    }
+                    successClosure(success: model)
+                }else{
+                    if (dic["msg"] != nil){
+                        fail(fail: dic["msg"] as? String)
+                    }else{
+                        fail(fail: "请求出错")
+                    }
+                }
+            }else{
+                if (dicResponse["msg"] != nil){
+                    let str = dicResponse["msg"] as? String
+                    fail(fail: str)
+                }else{
+                    fail(fail: "请求出错")
+                }
+            }
+            
+        }) { (error) in
+            fail(fail: nil)
+        }
+    }
+    
+    
+    class func getComicChapData(cciId: Int, successClosure:(success: CPMoeBusModel?) -> Void , fail: failClosure) {
+        
+        CPAFHTTPSessionManager.postWithUrlString(Constants.noauthApiURL, parameter:["action":"get_cartoon_chapters", "cciId":cciId], progressBlock: nil, successBlock: { (response) in
+            let dicResponse : NSDictionary = response as! NSDictionary
+//            print("getComicChapData:",dicResponse)
+            
+            if (dicResponse["success"]!).intValue == 1{
+                let dic = dicResponse["result"] as! NSDictionary
+                if  (dic["success"]!).intValue == 1{
+                    let modeltool = DictModelManager.sharedManager
+                    let model  = modeltool.objectWithDictionary(dic, cls: CPMoeBusModel.self) as? CPMoeBusModel
+                    successClosure(success: model)
+                }else{
+                    if (dic["msg"] != nil){
+                        fail(fail: dic["msg"] as? String)
+                    }else{
+                        fail(fail: "请求出错")
+                    }
+                }
+            }else{
+                if (dicResponse["msg"] != nil){
+                    let str = dicResponse["msg"] as? String
+                    fail(fail: str)
+                }else{
+                    fail(fail: "请求出错")
+                }
+            }
+            
+        }) { (error) in
+            fail(fail: nil)
+        }
+    }
+    
+    
+    static func customClassMapping() -> [String : String]? {
+        return ["list" : "\(MoeBusComicList.self)"]
+    }
+}
+
+
+class MoeBusComicList: NSObject {
+    var cccId: Int = 0  //漫画章节id
+    var cciId: Int = 0  //漫画集id
+    var cciName: String?    //漫画集名称
+    var cccName: String?    //漫画集名称
+    var img: String?    //封面图
+    var url: String?    //外链
+}

@@ -1,0 +1,75 @@
+//
+//  CPSuggestionsViewController.swift
+//  i84cpn
+//
+//  Created by BenjaminRichard on 16/5/20.
+//  Copyright © 2016年 5i84. All rights reserved.
+//
+
+import UIKit
+
+class CPSuggestionsViewController: UIViewController, UITableViewDataSource, UITableViewDelegate {
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        title = "意见反馈"
+        view.addSubview(suggestionsView)
+    }
+    
+    override func viewWillAppear(animated: Bool) {
+        super.viewWillAppear(animated)
+        suggestionsView.frame = view.frame
+    }
+    
+    override func viewDidAppear(animated: Bool) {
+        super.viewDidAppear(animated)
+        suggestionsView.tableView.dataSource = self
+        suggestionsView.tableView.delegate = self
+        suggestionsView.tableView.registerClass(CPSuggestionsTableViewCell.self, forCellReuseIdentifier: cellId)
+        suggestionsView.tableView.reloadData();
+        
+        suggestionsView.button.addTarget(self, action: #selector(newSuggestions), forControlEvents: .TouchUpInside)
+    }
+    
+    // 事件响应
+    func newSuggestions(button: UIButton) {
+        let vc = CPNewSuggestionViewController()
+        self.hidesBottomBarWhenPushed=true
+        self.navigationController?.pushViewController(vc, animated: true)
+    }
+    
+    // delegate
+    
+    // datasource
+    func numberOfSectionsInTableView(tableView: UITableView) -> Int {
+        return 1
+    }
+    
+    func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        return titleArray.count
+    }
+    
+    func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
+        cell = tableView.dequeueReusableCellWithIdentifier(cellId) as! CPSuggestionsTableViewCell
+        
+        cell.titleLabel.text = titleArray[indexPath.row]
+        let text:NSMutableAttributedString = NSMutableAttributedString(string: detailArray[indexPath.row])
+        text.addAttributes([NSForegroundColorAttributeName: Constants.paleWordColor], range: NSMakeRange(0, text.length))
+        //设置缩进、行距
+        let style = NSMutableParagraphStyle()
+        style.headIndent = 0;//缩进
+        style.lineSpacing = 11;//行距
+        text.addAttributes([NSParagraphStyleAttributeName: style], range: NSMakeRange(0, text.length))
+        
+        cell.detailLabel.attributedText = text
+        cell.detailLabel.font = Constants.mediumFont
+        
+        return cell
+    }
+    
+    private let cellId = "suggestionsCell"
+    private var cell: CPSuggestionsTableViewCell!
+    private let suggestionsView = CPSuggestionsView()
+    private let titleArray = ["原定的三木中学到三木花园的路线为什么取消了？", "苹果手机点媒体资料为什么会闪退啊", "苹果手机点媒体资料为什么会闪退啊"]
+    private let detailArray = ["我们将尽快回复您", "我们将尽快回复您", "我们将尽快回复您"]
+}

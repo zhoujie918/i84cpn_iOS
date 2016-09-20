@@ -1,0 +1,26 @@
+说明及注意事项：
+目录结构
+Classes 代码目录
+Main 主文件夹
+	Home 主界面
+		Model
+		View
+		Controller
+Expand 扩展
+	Tools
+	Categories 分类
+	Const 常量定义
+	Macros 宏定义
+	Newwork 网络
+	DataBase 数据库
+
+Pods 第三发库
+
+Resources 资源文件夹
+Assets.xcassets 频繁使用的小图片存放目录
+Audios 音频文件存放目录
+Images 低频率使用的大图片目录（如启动界面等）
+Plists 
+Video  视频文件存放目录
+
+Supporting Files 

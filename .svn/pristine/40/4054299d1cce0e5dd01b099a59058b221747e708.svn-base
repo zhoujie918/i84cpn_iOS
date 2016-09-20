@@ -1,0 +1,194 @@
+//
+//  CPHomePageViewController.swift
+//  i84cpn
+//
+//  Created by 周杰 on 16/5/24.
+//  Copyright © 2016年 5i84. All rights reserved.
+//
+
+import UIKit
+
+
+class CPHomePageController: UIViewController {
+    private var homePageView=CPHomePageView()
+    private var homePageModel=CPHomePageModel()
+    
+    var schoolMenuOptions:NSMutableArray=NSMutableArray()
+    var gradeMenuOptions:NSMutableArray=NSMutableArray()
+    
+    var schoolValue:String!
+    var gradeValue:String!
+    var singleTrip:Int!
+    var switchTag:Int!
+    var orgOrderId:Int!
+    
+    //获取接口数据，学校站点名称和年级
+    let noauthURL="\(URL_FIXED)/noauth/api"
+    let paraSchoolAction=["action":"line_station"]
+    let paraGradeAction=["action":"line_class"]
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        self.title="搜线路"
+//        self.navigationItem.title="123"
+        self.automaticallyAdjustsScrollViewInsets=false
+
+        self.navigationController?.navigationBar.barTintColor=COLOR_MAIN
+        self.navigationController?.navigationBar.tintColor = UIColor.blackColor()
+//        let leftBtn=UIButton()
+//        leftBtn.setImage(UIImage(named: "icon_msg"), forState: UIControlState.Normal)
+//        leftBtn.addTarget(self, action: #selector(self.onClick), forControlEvents: UIControlEvents.TouchUpInside)
+//        leftBtn.frame=CGRectMake(10, 10, leftBtn.currentImage!.size.width, leftBtn.currentImage!.size.height)
+//        self.navigationItem.leftBarButtonItem=UIBarButtonItem(customView: leftBtn)
+        
+        self.navigationItem.leftBarButtonItem=UIBarButtonItem.item(self, action: #selector(self.onClick), image: "icon_msg", highImage: "icon_msg")
+        self.navigationItem.rightBarButtonItem=UIBarButtonItem.item(self, action: #selector(self.onClick), image: "icon_ring", highImage: "icon_ring")
+        self.navigationController?.navigationBar.translucent=false
+        
+        
+        //homePageView
+        self.view.addSubview(homePageView)
+        homePageView.snp_makeConstraints { (make) in
+            make.edges.equalTo(self.view).offset(UIEdgeInsetsZero)
+        }
+//        if(orgOrderId == nil){
+//            homePageView.doubleTripBtn.hidden=true
+//            homePageView.doubleTripLabel.hidden=true
+//            
+//            singleTripLabel.snp_updateConstraints(closure: { (make) in
+//                make.left.equalTo(doubleTripLabel.snp_right).offset(WIDTH_DYNAMIC(22))
+//            })
+//        }
+        
+        //获取学校站点
+        homePageModel.dropSchoolLoadData(noauthURL, para: paraSchoolAction) { (success) in
+            self.homePageView.schoolDropDown.options=success
+            self.homePageView.schoolDropDown.defaultValue=success[0] as? String
+            
+        }
+        //获取年级
+        homePageModel.dropGradeLoadData(noauthURL, para: paraGradeAction) { (success) in
+            self.homePageView.gradeDropDown.options=success
+            self.homePageView.gradeDropDown.defaultValue=success[0] as? String
+            //            self.gradeValue=success[0] as? String
+        }
+        
+        homePageView.addressGest.addTarget(self, action: #selector(CPHomePageController.goAddress))
+        homePageView.initWithClosure {
+            let alert = UIAlertView.init(title: "提示", message: "努力开发中...", delegate: nil, cancelButtonTitle: "取消")
+            alert.show()
+//            let realTimeVC = CPRealTimeCarController()
+//            self.hidesBottomBarWhenPushed = true
+//            self.navigationController?.pushViewController(realTimeVC, animated: true)
+//            self.hidesBottomBarWhenPushed = false
+        }
+    }
+    
+    func goAddress(){
+        schoolValue=homePageView.schoolValue
+        gradeValue=homePageView.gradeValue
+        singleTrip=homePageView.singleTrip
+        switchTag=homePageView.switchButton.switcherTag
+        
+        if schoolValue==nil {
+            schoolValue=self.homePageView.schoolDropDown.defaultValue
+        }
+        if gradeValue==nil {
+            gradeValue=self.homePageView.gradeDropDown.defaultValue
+        }
+//        print("schoolValue:",schoolValue)
+//        print("gradeValue:",gradeValue)
+//        print("singleTrip:",singleTrip)
+//        print("switchTag:",switchTag)
+        
+        let addressCtl=CPAddressSearchController()
+        addressCtl.schoolValue=schoolValue
+        addressCtl.gradeValue=gradeValue
+        addressCtl.singleTrip=singleTrip
+        addressCtl.switchTag=switchTag
+        self.navigationController?.pushViewController(addressCtl, animated: true)
+        
+    }
+    
+    func onClick(){
+        let vc = CPMessageRemindingViewController()
+        self.hidesBottomBarWhenPushed=true
+        self.navigationController?.pushViewController(vc, animated: true)
+        self.hidesBottomBarWhenPushed=false
+    }
+    
+    override func viewWillAppear(animated: Bool) {
+        super.viewWillAppear(animated)
+    
+        IQKeyboardManager.sharedManager().enable=false
+        
+        if !CPUserModel.getLoginState() {
+            login()
+        }
+    }
+    
+    
+    override func viewWillDisappear(animated: Bool) {
+        super.viewWillDisappear(animated)
+        IQKeyboardManager.sharedManager().enable=true
+        
+//        self.homePageView.schoolDropDown.options.removeAllObjects()
+//        self.homePageView.schoolDropDown.defaultValue=""
+//        self.homePageView.gradeDropDown.options.removeAllObjects()
+//        self.homePageView.gradeDropDown.defaultValue=""
+        
+    }
+    
+    override func viewDidAppear(animated: Bool) {
+        super.viewDidAppear(animated)
+    }
+    
+
+  
+    
+    
+    func login() {
+        let userName = NSUserDefaults.standardUserDefaults().valueForKey("UserNameKey") as! String!
+        let pwd = NSUserDefaults.standardUserDefaults().valueForKey("PwdKey") as! String!
+        if  pwd != nil && pwd.characters.count != 0 {
+            let param = ["username": userName,"password":pwd, "manage":"member", "isApp":"1"];
+            
+            let hub = MBProgressHUD.showHUDAddedTo(self.view, animated: true)
+            CPAFHTTPSessionManager.postWithUrlString(Constants.loginURL , parameter: param, progressBlock: { (progress) in
+                
+                }, successBlock: { (respondData) in
+                    let dic:NSDictionary = respondData as! NSDictionary
+                    let success: Bool = dic["success"] as! Bool
+                    if success == true {
+                        CPUserModel.login()
+                        CPUserModel.getUserInfo()
+                        print("登录成功")
+                    } else {
+                        print("login error")
+                    }
+                    hub.hide(true)
+                }, failureBlock: { (error) in
+                    print(error)
+                    hub.hide(true)
+            })
+            
+        }
+    }
+
+    override func didReceiveMemoryWarning() {
+        super.didReceiveMemoryWarning()
+        // Dispose of any resources that can be recreated.
+    }
+    
+
+    /*
+    // MARK: - Navigation
+
+    // In a storyboard-based application, you will often want to do a little preparation before navigation
+    override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
+        // Get the new view controller using segue.destinationViewController.
+        // Pass the selected object to the new view controller.
+    }
+    */
+
+}

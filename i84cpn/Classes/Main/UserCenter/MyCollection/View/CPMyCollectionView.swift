@@ -1,0 +1,56 @@
+//
+//  CPMyCollectionView.swift
+//  i84cpn
+//
+//  Created by BenjaminRichard on 16/6/14.
+//  Copyright © 2016年 5i84. All rights reserved.
+//
+
+import UIKit
+
+class CPMyCollectionView: CPTwoButtonTopTabBarView {
+
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        setButtonTitle()
+        scrollView.addSubview(collectionLineView)
+        scrollView.addSubview(partakeLineView)
+        
+    }
+    
+    required init?(coder aDecoder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    func loadData(model: CPMyCollectionModel) {
+        if model.collectionLineList.count != 0 {
+            collectionLineView.loadData(0, data: model.collectionLineList)
+        } else {
+            let view = CPOrderWaitView()
+            view.frame = self.frame
+            collectionLineView.addSubview(view)
+        }
+        if model.parTakeLineList.count != 0 {
+            partakeLineView.loadData(1, data: model.parTakeLineList)
+        } else {
+            let view = CPOrderWaitView()
+            view.frame = self.frame
+            partakeLineView.addSubview(view)
+        }
+    }
+
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        collectionLineView.frame = CGRectMake(0, 0, Constants.screenWidth, Constants.screenHeight)
+        partakeLineView.frame = collectionLineView.frame
+        partakeLineView.frame.origin.x = Constants.screenWidth
+    }
+    
+    func setButtonTitle() {
+        button1.setTitle("我订制的线路", forState: .Normal)
+        button2.setTitle("我参与的线路", forState: .Normal)
+    }
+    
+    let collectionLineView = CPMyCollectionListView()
+    let partakeLineView = CPMyCollectionListView()
+}

@@ -1,0 +1,64 @@
+//
+//  CPSuggesstionsTableViewCell.swift
+//  i84cpn
+//
+//  Created by BenjaminRichard on 16/6/12.
+//  Copyright © 2016年 5i84. All rights reserved.
+//
+
+import UIKit
+
+class CPSuggesstionsTableViewCell: UITableViewCell, UICollectionViewDelegateFlowLayout, UICollectionViewDelegate, UICollectionViewDataSource {
+
+    
+    override func awakeFromNib() {
+        super.awakeFromNib()
+        self.selectionStyle = .None
+        collectionView.backgroundColor = Constants.whiteBGColor
+        collectionView.dataSource = self
+        collectionView.delegate = self
+        collectionView.registerClass(CPSuggestionsCollectionViewCell.self, forCellWithReuseIdentifier: cellId)
+        separateView.backgroundColor = Constants.paleBGColor
+    }
+
+    override func setSelected(selected: Bool, animated: Bool) {
+        super.setSelected(selected, animated: animated)
+
+        // Configure the view for the selected state
+    }
+    
+    func setPhotoArray(array: NSArray) {
+        self.photoArray = array
+        
+    }
+    
+    // MARK:-- datasource
+    func collectionView(collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
+        if photoArray == nil {
+            return 0
+        }
+        return self.photoArray!.count
+    }
+    
+    func numberOfSectionsInCollectionView(collectionView: UICollectionView) -> Int {
+        return 1
+    }
+    
+    func collectionView(collectionView: UICollectionView, cellForItemAtIndexPath indexPath: NSIndexPath) -> UICollectionViewCell {
+        let cell = collectionView.dequeueReusableCellWithReuseIdentifier(cellId, forIndexPath: indexPath) as? CPSuggestionsCollectionViewCell
+        if indexPath.row < self.photoArray?.count {
+            cell?.loadImageWithName(self.photoArray![indexPath.row] as! String)
+        }
+        return cell!
+    }
+
+    
+    // MARK:-- 属性
+    private let cellId = "photoCellId"
+    private var photoArray: NSArray?
+    @IBOutlet weak var separateView: UIView!
+    @IBOutlet weak var collectionViewHeight: NSLayoutConstraint!
+    @IBOutlet weak var titleLabel: UILabel!
+    @IBOutlet weak var collectionView: UICollectionView!
+    @IBOutlet weak var answerLabel: UILabel!
+}

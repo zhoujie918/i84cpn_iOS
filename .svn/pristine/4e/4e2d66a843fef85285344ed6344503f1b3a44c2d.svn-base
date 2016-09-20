@@ -1,0 +1,261 @@
+//
+//  CPNewSuggestionView.swift
+//  i84cpn
+//
+//  Created by Benjamin on 16/5/29.
+//  Copyright © 2016年 5i84. All rights reserved.
+//
+
+import UIKit
+protocol CPPhotoCollectionViewDelegate {
+    func addImage()
+}
+class CPNewSuggestionView: UIView, UITextViewDelegate, UICollectionViewDelegateFlowLayout, UICollectionViewDelegate, UICollectionViewDataSource, CPPhotoCollectionViewCellDelegate {
+    var delegate: CPPhotoCollectionViewDelegate?
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        self.backgroundColor = Constants.paleBGColor
+        
+        self.addSubview(tipLabel)
+        self.addSubview(containView)
+        self.addSubview(collectionView)
+        self.addSubview(submitButton)
+        
+        containView.addSubview(productButton)
+        containView.addSubview(rideButton)
+        containView.addSubview(line)
+        containView.addSubview(textView)
+        
+        
+        productButton.addTarget(self, action: #selector(selectType), forControlEvents: .TouchUpInside)
+        rideButton.addTarget(self, action: #selector(selectType), forControlEvents: .TouchUpInside)
+
+        collectionView.dataSource = self
+        collectionView.delegate = self
+        textView.delegate = self
+        
+        collectionView.registerClass(CPPhotoCollectionViewCell.self, forCellWithReuseIdentifier: cellId)
+    }
+        required init?(coder aDecoder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    // 问题反馈类型
+    private var type = 0
+    func selectType(button: UIButton) {
+        if type != button.tag {
+            type = button.tag
+            if type == 0 {
+                productButton.setImage(UIImage(named: "icon_product_select"), forState: .Normal)
+                productButton.setTitleColor(Constants.yellowWordColor, forState: .Normal)
+                rideButton.setImage(UIImage(named: "icon_ride_unsel"), forState: .Normal)
+                rideButton.setTitleColor(Constants.paleWordColor, forState: .Normal)
+            } else {
+                productButton.setImage(UIImage(named: "icon_product_unsel"), forState: .Normal)
+                productButton.setTitleColor(Constants.paleWordColor, forState: .Normal)
+                rideButton.setImage(UIImage(named: "icon_ride_select"), forState: .Normal)
+                rideButton.setTitleColor(Constants.yellowWordColor, forState: .Normal)
+            }
+        }
+    }
+    
+    func getType() -> Int {
+        return type
+    }
+    
+    func getText() -> String {
+        return textView.text
+    }
+    
+    func insertImage(img: UIImage) {
+        Constants.dPrint(CPPhotoCollectionViewCell.getCount() - 1)
+        photoArray.insertObject(img, atIndex: CPPhotoCollectionViewCell.getCount() - 1)
+        CPPhotoCollectionViewCell.addCount()
+        collectionView.reloadData()
+    }
+    
+    func getImageArray() -> NSArray {
+        return photoArray
+    }
+
+    func reloadData(data: NSArray) {
+        productButton.setTitle(data[0].objectForKey("name") as? String, forState: .Normal)
+        rideButton.setTitle(data[1].objectForKey("name") as? String, forState: .Normal)
+    }
+    
+    // datasource
+    func collectionView(collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
+        return photoArray.count
+    }
+    
+    func numberOfSectionsInCollectionView(collectionView: UICollectionView) -> Int {
+        return 1
+    }
+    
+    func collectionView(collectionView: UICollectionView, cellForItemAtIndexPath indexPath: NSIndexPath) -> UICollectionViewCell {
+        let cell = collectionView.dequeueReusableCellWithReuseIdentifier(cellId, forIndexPath: indexPath) as? CPPhotoCollectionViewCell
+        cell?.delegate = self
+        cell!.setIndex(indexPath.row)
+        cell?.imageView.image = photoArray[indexPath.row] as? UIImage
+        cell?.setButtonHidden()
+        return cell!
+    }
+
+  
+    // delegate
+    func deleteCell(index: Int) {
+        Constants.dPrint("delete \(index)")
+        photoArray.removeObjectAtIndex(index)
+        collectionView.reloadData()
+    }
+    
+    func addImage() {
+        if delegate != nil {
+            delegate?.addImage()
+        }
+    }
+    
+    // delegate layout
+    func collectionView(collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAtIndexPath indexPath: NSIndexPath) -> CGSize {
+        return CGSizeMake(CGFloat(cellHeight), CGFloat(cellHeight))
+    }
+    
+    func collectionView(collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, insetForSectionAtIndex section: Int) -> UIEdgeInsets {
+        return UIEdgeInsetsMake(20, 0, 0, 0)
+    }
+    
+    func textViewDidBeginEditing(textView: UITextView) {
+        if textView.text == "请在此输入您的问题" {
+            textView.text = ""
+            textView.textColor = Constants.blackWordColor
+        }
+    }
+    
+    func textViewDidEndEditing(textView: UITextView) {
+        if textView.text.characters.count == 0 {
+            textView.text = "请在此输入您的问题"
+            textView.textColor = Constants.paleWordColor
+        }
+    }
+    
+    private var photoArray:NSMutableArray = [UIImage(named: "icon_cam")!]
+    private let cellId = "photoCellId"
+//    private var cell: CPPhotoCollectionViewCell?
+    // 界面
+    override func layoutSubviews() {
+        tipLabel.snp_makeConstraints { (make) in
+            make.top.equalTo(80)
+            make.left.equalTo(self)
+            make.right.equalTo(self)
+        }
+        
+        containView.snp_makeConstraints { (make) in
+            make.left.right.equalTo(tipLabel)
+            make.top.equalTo(tipLabel.snp_bottom).offset(10)
+            make.bottom.equalTo(textView.snp_bottom)
+        }
+        
+        productButton.snp_makeConstraints { (make) in
+            make.left.equalTo(containView)
+            make.top.equalTo(containView.snp_top).offset(10)
+        }
+        
+        rideButton.snp_makeConstraints { (make) in
+            make.left.equalTo(productButton.snp_right)
+            make.top.equalTo(productButton)
+            make.right.equalTo(containView)
+            make.width.equalTo(productButton)
+        }
+        
+        line.snp_makeConstraints { (make) in
+            make.left.right.equalTo(containView)
+            make.top.equalTo(productButton.snp_bottom).offset(10)
+            make.height.equalTo(1)
+        }
+        
+        textView.snp_makeConstraints { (make) in
+            make.top.equalTo(line.snp_bottom)
+            make.left.equalTo(containView.snp_left).offset(10)
+            make.right.equalTo(containView.snp_right).offset(-10)
+            make.bottom.equalTo(collectionView.snp_top).offset(-20)
+        }
+        
+        collectionView.snp_makeConstraints { (make) in
+            make.left.equalTo(0)
+            make.right.equalTo(self)
+            make.height.equalTo(cellHeight + 20)
+            make.bottom.equalTo(submitButton.snp_top).offset(-20)
+        }
+        
+        
+        submitButton.snp_makeConstraints { (make) in
+            make.left.equalTo(20)
+            make.right.equalTo(self).offset(-20)
+            make.bottom.equalTo(self).offset(-20)
+        }
+    }
+    
+    private let cellHeight = (Constants.screenWidth - 10 * 4) / 5
+    
+    
+    private let tipLabel: UILabel = {
+        let view = UILabel()
+        view.numberOfLines = 0
+        view.text = "您在使用同学号产品或服务过程中，如遇到任何问题，\n欢迎提交给我们，谢谢！"
+        view.font = Constants.superSmallFont
+        view.textColor = Constants.tipWordColor
+        view.textAlignment = NSTextAlignment.Center
+        return view
+    } ()
+    
+    private let containView = Constants.containView()
+    
+    private let productButton: UIButton = {
+        let view = UIButton()
+        view.setImage(UIImage(named: "icon_product_select"), forState: .Normal)
+//        view.setTitle("产品体验问题", forState: .Normal)
+        view.setTitleColor(Constants.yellowWordColor, forState: .Normal)
+        view.titleLabel?.font = Constants.smallFont
+        view.tag = 0
+        return view
+    } ()
+    
+    private let rideButton: UIButton = {
+        let view = UIButton()
+        view.setImage(UIImage(named: "icon_ride_unsel"), forState: .Normal)
+//        view.setTitle("乘车问题", forState: .Normal)
+        view.setTitleColor(Constants.paleWordColor, forState: .Normal)
+        view.titleLabel?.font = Constants.smallFont
+        view.tag = 1
+        return view
+    } ()
+    
+    private let line = Constants.splitLine()
+    
+    private let textView: UITextView = {
+        let view = UITextView()
+        view.font = Constants.smallFont
+        view.text = "请在此输入您的问题"
+        view.textColor = Constants.paleWordColor
+        return view
+    } ()
+    
+    let collectionView: UICollectionView = {
+        let layout = UICollectionViewFlowLayout()
+        layout.sectionInset = UIEdgeInsetsMake(0, 0, 0, 0)
+        layout.minimumLineSpacing = 0
+//        layout.itemSize = CGSizeMake(56, 56)
+        let view = UICollectionView(frame: CGRectMake(0, 0, 0, 0), collectionViewLayout: layout)
+        view.backgroundColor = Constants.whiteBGColor
+        return view
+    }()
+    
+    let submitButton: UIButton = {
+        let btn: UIButton = UIButton()
+        btn.setTitle("提交", forState: .Normal)
+        btn.setTitleColor(Constants.whiteWordColor, forState: .Normal)
+        btn.layer.cornerRadius = 16
+        btn.setBackgroundImage(UIImage(named: "btn_login_nor"), forState: .Normal)
+        return btn
+    } ()
+}

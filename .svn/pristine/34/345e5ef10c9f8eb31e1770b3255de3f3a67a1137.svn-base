@@ -1,0 +1,139 @@
+//
+//  CPMyCollectionListView.swift
+//  i84cpn
+//
+//  Created by BenjaminRichard on 16/6/14.
+//  Copyright © 2016年 5i84. All rights reserved.
+//
+
+import UIKit
+
+protocol MyCollectionListDelegate {
+    func collection(type: Int, index: Int)
+    func cancelAction(type: Int, index: Int, attendMsg: String)
+}
+
+class CPMyCollectionListView: UIView, UITableViewDataSource, MyCollectionOrderCellDelegate {
+
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        self.addSubview(tableView)
+        tableView.dataSource = self
+        tableView.registerNib(UINib(nibName: "CPMyCollectionOrderCellTableViewCell", bundle: nil), forCellReuseIdentifier: cellId)
+    }
+    
+    required init?(coder aDecoder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    /**
+     tableview重新加载数据
+     
+     - parameter type: 数据类型 0为定制线路列表 1为参与的线路列表
+     - parameter data: 列表
+     */
+    func loadData(type: Int, data: NSArray) {
+        self.type = type
+        if type == 0 {
+            collectionLineList = data as? Array<CPMyCollectionModel.MyCollectionLineModel>
+        } else {
+            partakeLineList = data as? Array<CPMyCollectionModel.MyParTakeLineModel>
+        }
+        tableView.reloadData()
+    }
+    
+    // datasource
+    func numberOfSectionsInTableView(tableView: UITableView) -> Int {
+        return 1
+    }
+    
+    func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        if self.type == 0 && collectionLineList != nil {
+            return collectionLineList!.count
+        } else if self.type == 1 && partakeLineList != nil {
+            return partakeLineList!.count
+        }
+        return 0
+    }
+    
+    func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
+        let cell = tableView.dequeueReusableCellWithIdentifier(cellId) as! CPMyCollectionOrderCellTableViewCell
+        cell.index = indexPath.row
+        if self.type == 0 {
+            cell.routeLabel.text = collectionLineList![indexPath.row].lineName
+            cell.detailLabel.text = collectionLineList![indexPath.row].content
+            cell.setCancelButtonTitle("取消定制")
+            if collectionLineList![indexPath.row].replyContent == nil || collectionLineList![indexPath.row].replyContent == "" {
+                cell.answerLabel.text = "我们将尽快答复您"
+            } else {
+                cell.answerLabel.text = collectionLineList![indexPath.row].replyContent
+            }
+            
+            attendMsg = collectionLineList![indexPath.row].attendMsg
+        } else {
+            cell.routeLabel.text = partakeLineList![indexPath.row].lineName
+            cell.detailLabel.text = partakeLineList![indexPath.row].attendMsg
+            cell.setCancelButtonTitle("我要退出")
+            if partakeLineList![indexPath.row].replyContent == nil || partakeLineList![indexPath.row].replyContent == "" {
+                cell.answerLabel.text = "我们将尽快答复您"
+            } else {
+                cell.answerLabel.text = partakeLineList![indexPath.row].replyContent
+            }
+            attendMsg = partakeLineList![indexPath.row].attendMsg
+        }
+        cell.collectionDelegate = self
+        return cell
+    }
+    
+    // delegate
+    func collection(index: Int) {
+        if collectionListDelegate != nil {
+            collectionListDelegate?.collection(type, index: index)
+        }
+    }
+    
+    func cancelCollection(index: Int) {
+        if collectionListDelegate != nil {
+            collectionListDelegate?.cancelAction(type, index: index, attendMsg: attendMsg!)
+        }
+    }
+    
+    func removeMyCollectionLineListAtIndex(index: Int) {
+        if collectionLineList?.count > 0 {
+            collectionLineList?.removeAtIndex(index)
+            tableView.reloadData()
+        }
+    }
+    
+    func removePartakeLineListAtIndex(index: Int) {
+        if partakeLineList?.count > 0 {
+            partakeLineList?.removeAtIndex(index)
+            tableView.reloadData()
+        }
+    }
+    
+    // MARK: -- 属性
+    var collectionListDelegate:MyCollectionListDelegate?
+    private var type = 0
+    private var attendMsg: String?
+    private let cellId = "myCollectionCellId"
+    private var collectionLineList: Array<CPMyCollectionModel.MyCollectionLineModel>?
+    private var  partakeLineList: Array<CPMyCollectionModel.MyParTakeLineModel>?
+    override func layoutSubviews() {
+        tableView.snp_makeConstraints { (make) in
+            make.left.equalTo(0)
+            make.top.equalTo(self).offset(0)
+            make.right.equalTo(self)
+            make.height.equalTo(Constants.screenHeight - 118)
+        }
+    }
+    
+    let tableView: UITableView = {
+        let view = UITableView()
+        view.backgroundColor = Constants.paleBGColor
+        view.separatorStyle = UITableViewCellSeparatorStyle.None
+        view.estimatedRowHeight = 150
+        view.rowHeight = UITableViewAutomaticDimension
+        return view
+    } ()
+}

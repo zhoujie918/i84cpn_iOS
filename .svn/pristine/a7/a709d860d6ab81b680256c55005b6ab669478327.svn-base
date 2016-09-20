@@ -1,0 +1,128 @@
+//
+//  CPCitySwitchViewController.swift
+//  i84cpn
+//
+//  Created by BenjaminRichard on 16/5/20.
+//  Copyright © 2016年 5i84. All rights reserved.
+//
+
+import UIKit
+
+class CPCitySwitchViewController: UIViewController,UITableViewDataSource, UITableViewDelegate, BMKLocationServiceDelegate, BMKGeoCodeSearchDelegate {
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        view.addSubview(citySwitchView)
+        title = "城市切换"
+    }
+
+    override func viewWillAppear(animated: Bool) {
+        super.viewWillAppear(animated)
+        citySwitchView.frame = view.frame
+        if NSUserDefaults.standardUserDefaults().valueForKey("defaultCityIndex") != nil {
+            defualt = NSUserDefaults.standardUserDefaults().valueForKey("defaultCityIndex") as! Int
+        }
+        
+    }
+    
+    override func viewDidAppear(animated: Bool) {
+        super.viewDidAppear(animated)
+        citySwitchView.tableView.dataSource = self
+        citySwitchView.tableView.delegate = self
+        citySwitchView.tableView.registerClass(CPCitySwitchTableViewCell.self, forCellReuseIdentifier: cellId)
+        citySwitchView.tableView.reloadData()
+        
+        
+        locationManager.delegate = self
+        geocodeSearch.delegate = self
+        locationManager.startUserLocationService()
+    }
+    
+    func onGetReverseGeoCodeResult(searcher: BMKGeoCodeSearch!, result: BMKReverseGeoCodeResult!, errorCode error: BMKSearchErrorCode) {
+        let cityName: String = result.addressDetail.city
+        citySwitchView.cityLabel.text = cityName
+        if NSUserDefaults.standardUserDefaults().valueForKey("defaultCityIndex") == nil {
+            for str in cityArray {
+                if cityName.hasPrefix(str) {
+                    defualt = cityArray.indexOf(str)!
+                    NSUserDefaults.standardUserDefaults().setObject(defualt, forKey: "defaultCityIndex")
+                    NSUserDefaults.standardUserDefaults().setObject(cityArray[defualt], forKey: "defaultCityName")
+                    //设置同步
+                    NSUserDefaults.standardUserDefaults().synchronize()
+                    citySwitchView.tableView.reloadData()
+                }
+            }
+        }
+        
+    }
+    
+    // delegate
+    func didUpdateBMKUserLocation(userLocation: BMKUserLocation!) {
+        let currentLongitude=locationManager.userLocation.location.coordinate.longitude  //经度
+        let CurrentLatitude=locationManager.userLocation.location.coordinate.latitude    //纬度
+        
+        //发起反向地理编码检索
+        let reverseGeocodeSearchOption = BMKReverseGeoCodeOption()
+        //        reverseGeocodeSearchOption.reverseGeoPoint = CLLocationCoordinate2DMake(26.0812552750482, 119.327499252607)
+        reverseGeocodeSearchOption.reverseGeoPoint = CLLocationCoordinate2DMake(CurrentLatitude, currentLongitude)
+        
+        geocodeSearch.reverseGeoCode(reverseGeocodeSearchOption)
+
+        //停止定位
+        locationManager.stopUserLocationService()
+    }
+
+    
+    func tableView(tableView: UITableView, didSelectRowAtIndexPath indexPath: NSIndexPath) {
+        if defualt != indexPath.row {
+            let index = NSIndexPath(forRow: defualt, inSection: 0)
+            var cell = tableView.cellForRowAtIndexPath(index) as! CPCitySwitchTableViewCell
+            cell.defaultButton.setImage(nil, forState: .Normal)
+            defualt = indexPath.row
+            cell = tableView.cellForRowAtIndexPath(indexPath) as! CPCitySwitchTableViewCell
+            cell.defaultButton.setImage(UIImage(named: "icon_sel"), forState: .Normal)
+            //设置存储信息
+            NSUserDefaults.standardUserDefaults().setObject(defualt, forKey: "defaultCityIndex")
+            NSUserDefaults.standardUserDefaults().setObject(cityArray[indexPath.row], forKey: "defaultCityName")
+            //设置同步
+            NSUserDefaults.standardUserDefaults().synchronize()
+            self.navigationController?.popViewControllerAnimated(true)
+        }
+//        citySwitchView.cityLabel.text = cityArray[indexPath.row]
+    }
+    
+    
+    // datasource
+    func numberOfSectionsInTableView(tableView: UITableView) -> Int {
+        return 1
+    }
+    
+    func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        return cityArray.count
+    }
+    
+    func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
+        let cell:CPCitySwitchTableViewCell = tableView.dequeueReusableCellWithIdentifier(cellId) as! CPCitySwitchTableViewCell
+        if indexPath.row == defualt {
+            cell.defaultButton.setImage(UIImage(named: "icon_sel"), forState: .Normal)
+        } else {
+            cell.defaultButton.setImage(UIImage(named: "icon_unsel"), forState: .Normal)
+        }
+        cell.titleLabel.text = cityArray[indexPath.row]
+        return cell
+    }
+    
+    private let citySwitchView = CPCitySwitchView()
+    private let cellId = "citySwitchCell"
+    var cityArray = ["抚顺", "福州", "广州", "上海", "沈阳"]
+    var defualt = 0
+    
+    private let locationManager: BMKLocationService = {
+        let m = BMKLocationService()
+        m.desiredAccuracy = kCLLocationAccuracyBest
+        m.distanceFilter = 10.0
+        return m
+    } ()
+    
+    var geocodeSearch=BMKGeoCodeSearch()        //反地理编码
+}

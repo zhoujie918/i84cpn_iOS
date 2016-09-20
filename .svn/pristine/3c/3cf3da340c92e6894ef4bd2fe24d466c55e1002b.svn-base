@@ -1,0 +1,116 @@
+//
+//  CPMessageListView.swift
+//  i84cpn
+//
+//  Created by BenjaminRichard on 16/6/6.
+//  Copyright © 2016年 5i84. All rights reserved.
+//
+
+import UIKit
+protocol MessageListDelegate : NSObjectProtocol {
+    func pushView(index: Int, cmrId: Int, msgType: Int)
+}
+
+class CPMessageListView: UIView,UITableViewDataSource, UITableViewDelegate {
+
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        self.addSubview(tableView)
+        self.addSubview(statusView)
+        
+        tableView.dataSource = self
+        tableView.delegate = self
+    }
+    
+    required init?(coder aDecoder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    func loadData(data: NSArray) {
+        self.data = data as! Array<CPMessageRemindingModel.CMessageRemindingListModel>
+        if data.count == 0 {
+            tableView.hidden = true
+            statusView.hidden = false
+        } else {
+            tableView.hidden = false
+            statusView.hidden = true
+        }
+        if index == 3 {
+            tableView.registerClass(CPRelavanceTableViewCell.self, forCellReuseIdentifier: cellId)
+        }
+        
+        tableView.reloadData()
+    }
+    
+    // delegate
+    func tableView(tableView: UITableView, didSelectRowAtIndexPath indexPath: NSIndexPath) {
+        if (pushDelegate != nil) {
+            let cmrId = data[indexPath.row].cmrId
+            let msgType = data[indexPath.row].msgType
+            pushDelegate?.pushView(index, cmrId: cmrId!, msgType: msgType!)
+        }
+    }
+    
+    // datasource
+    func numberOfSectionsInTableView(tableView: UITableView) -> Int {
+        return 1
+    }
+    
+    func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        
+        return data.count
+    }
+    
+    func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
+        if index == 3 {
+            let cell = tableView.dequeueReusableCellWithIdentifier(cellId) as! CPRelavanceTableViewCell
+            
+            cell.loadData(data[indexPath.row].content!, createTime: data[indexPath.row].createTime!, status: data[indexPath.row].applyStatus!, statusMsg: data[indexPath.row].applyMsg == nil ? "" : data[indexPath.row].applyMsg!, isRead: data[indexPath.row].isRead!)
+            return cell
+        }
+        var cell = tableView.dequeueReusableCellWithIdentifier(cellId)
+        if cell == nil {
+            cell = UITableViewCell(style: UITableViewCellStyle.Subtitle, reuseIdentifier: cellId)
+            cell?.textLabel?.numberOfLines = 0
+            cell?.textLabel?.font = Constants.mediumFont
+        }
+        if data[indexPath.row].isRead == false { // 未读
+            cell?.textLabel!.font = Constants.titleFont
+        } else {
+            cell!.textLabel!.font = Constants.mediumFont
+        }
+        cell?.textLabel?.text = data[indexPath.row].content
+        cell?.detailTextLabel?.text = data[indexPath.row].createTime
+        return cell!
+    }
+    
+    override func layoutSubviews() {
+        tableView.snp_makeConstraints { (make) in
+            make.left.equalTo(0)
+            make.top.equalTo(self).offset(0)
+            make.right.equalTo(self)
+            make.height.equalTo(Constants.screenHeight - 118)
+        }
+        
+        statusView.frame = tableView.frame
+    }
+    
+    private var data =  Array<CPMessageRemindingModel.CMessageRemindingListModel>()
+    private let cellId = "msgrmdCell"
+    weak var pushDelegate: MessageListDelegate?
+    var index = 0
+    
+    let tableView: UITableView = {
+        let view = UITableView()
+        view.backgroundColor = .clearColor()
+        view.separatorStyle = UITableViewCellSeparatorStyle.None
+        view.rowHeight = 80
+        return view
+    } ()
+    
+    private let statusView: CPStatusView = {
+        let view = CPStatusView()
+        view.hidden = true
+        return view
+    } ()
+}

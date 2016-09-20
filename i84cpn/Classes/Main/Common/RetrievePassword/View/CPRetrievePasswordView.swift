@@ -1,0 +1,173 @@
+//
+//  CPRetrievePasswordView.swift
+//  i84cpn
+//
+//  Created by BenjaminRichard on 16/5/7.
+//  Copyright © 2016年 5i84. All rights reserved.
+//
+
+import UIKit
+
+class CPRetrievePasswordView: UIView {
+
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        self.backgroundColor = Constants.paleBGColor
+        containView.addSubview(phoneNumTextField)
+        containView.addSubview(phoneNumLine)
+        containView.addSubview(SMSTextField)
+        containView.addSubview(SMSButton)
+        containView.addSubview(SMSLine)
+        containView.addSubview(passwordTextField)
+        containView.addSubview(showPasswordButton)
+        
+        self.addSubview(containView)
+        self.addSubview(tipLabel)
+        self.addSubview(signUpButton)
+    }
+    
+    required init?(coder aDecoder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    //MARK: --布局
+    override func layoutSubviews() {
+        containView.snp_makeConstraints { (make) in
+            make.left.right.equalTo(0)
+            make.top.equalTo(85)
+            make.bottom.equalTo(passwordTextField.snp_bottom).offset(20)
+        }
+        
+        phoneNumTextField.snp_makeConstraints { (make) in
+            make.left.equalTo(30)
+            make.top.equalTo(20)
+            make.right.equalTo(-30)
+        }
+        
+        phoneNumLine.snp_makeConstraints { (make) in
+            make.left.equalTo(phoneNumTextField)
+            make.right.equalTo(phoneNumTextField)
+            make.top.equalTo(phoneNumTextField.snp_bottom).offset(20)
+            make.height.equalTo(1)
+        }
+        
+        SMSTextField.snp_makeConstraints { (make) in
+            make.left.equalTo(phoneNumTextField.snp_left)
+            make.top.equalTo(phoneNumLine.snp_bottom).offset(20)
+        }
+        
+        SMSButton.snp_makeConstraints { (make) in
+            make.right.equalTo(phoneNumTextField)
+            make.top.equalTo(phoneNumLine.snp_bottom).offset(15)
+            make.width.equalTo(120)
+            make.height.equalTo(35)
+        }
+        
+        SMSLine.snp_makeConstraints { (make) in
+            make.left.equalTo(SMSTextField)
+            make.right.equalTo(SMSButton)
+            make.top.equalTo(SMSTextField.snp_bottom).offset(20)
+            make.height.equalTo(1)
+        }
+        
+        passwordTextField.snp_makeConstraints { (make) in
+            make.left.equalTo(phoneNumTextField)
+            make.top.equalTo(SMSLine.snp_bottom).offset(20)
+            make.width.equalTo(150)
+        }
+        
+        showPasswordButton.snp_makeConstraints { (make) in
+            make.centerY.equalTo(passwordTextField)
+            make.right.equalTo(SMSButton)
+        }
+        
+        tipLabel.snp_makeConstraints { (make) in
+            make.top.equalTo(containView.snp_bottom).offset(20)
+            make.left.equalTo(0)
+            make.right.equalTo(0)
+        }
+        
+        signUpButton.snp_makeConstraints { (make) in
+            make.left.equalTo(phoneNumTextField)
+            make.right.equalTo(SMSButton)
+            make.top.equalTo(tipLabel.snp_bottom).offset(20)
+        }
+    }
+    
+    //MARK: -- 属性
+    let containView = Constants.containView()
+    
+    // 手机号
+    let phoneNumTextField: UITextField = {
+        let view: UITextField = UITextField()
+        view.placeholder = "请输入11位手机号"
+        view.font = Constants.smallFont
+        view.keyboardType = UIKeyboardType.NamePhonePad
+        view.clearButtonMode = UITextFieldViewMode.WhileEditing
+        return view
+    } ()
+    
+    let phoneNumLine: UIView = Constants.splitLine()
+    
+    //短信验证码
+    let SMSTextField: UITextField = {
+        let view: UITextField = UITextField()
+        view.placeholder = "请输入短信验证码"
+        view.clearButtonMode = UITextFieldViewMode.WhileEditing
+        view.font = Constants.smallFont
+        return view
+    } ()
+    
+//    let SMSButton: UIButton = {
+//        let btn: UIButton = UIButton()
+//        btn.titleLabel?.font = Constants.smallFont
+//        btn.setTitle("再次获取验证码", forState: .Normal)
+//        btn.contentEdgeInsets = UIEdgeInsetsMake(5, 5, 5, 5)
+//        btn.setTitleColor(Constants.yellowWordColor, forState: .Normal)
+//        btn.layer.borderColor = Constants.yellowWordColor.CGColor
+//        btn.layer.borderWidth = 1
+//        return btn
+//    } ()
+    let SMSButton = CPGetSMSCodeButton()
+    
+    let SMSLine: UIView = Constants.splitLine()
+    
+    //密码
+    let passwordTextField: UITextField = {
+        let view: UITextField = UITextField()
+        view.secureTextEntry = true
+        view.font = Constants.smallFont
+        view.placeholder = "请输入新密码"
+        view.clearButtonMode = UITextFieldViewMode.WhileEditing
+        return view
+    } ()
+    
+    let showPasswordButton: UIButton = {
+        let btn: UIButton = UIButton()
+        btn.setImage(UIImage(named: "icon_close"), forState: .Normal)
+        return btn
+    } ()
+    
+    // 错误提示
+    let tipLabel: UILabel = {
+        let label: UILabel = UILabel()
+        label.textColor = Constants.redWordColor
+        label.font = Constants.smallFont
+        label.text = "新密码少于6位字符"
+        label.textAlignment = NSTextAlignment.Center
+        label.hidden = true
+        return label
+    } ()
+    
+    // 提交
+    let signUpButton: UIButton = {
+        let btn: UIButton = UIButton()
+        btn.setTitle("提   交", forState: .Normal)
+        btn.setTitleColor(Constants.whiteWordColor, forState: .Normal)
+        btn.setBackgroundImage(UIImage(named: "btn_login_nor"), forState: .Normal)
+        btn.setBackgroundImage(UIImage(named: "btn_login_pre"), forState: .Highlighted)
+        btn.layer.cornerRadius = 16
+        return btn
+    } ()
+}
+

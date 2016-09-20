@@ -1,0 +1,116 @@
+//
+//  CPRelevancePassengerRideInfoPushView.swift
+//  i84cpn
+//
+//  Created by BenjaminRichard on 16/5/24.
+//  Copyright © 2016年 5i84. All rights reserved.
+//
+
+import UIKit
+
+class CPRelevancePassengerRideInfoPushView: UIView {
+
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        self.backgroundColor = Constants.paleBGColor
+        
+        self.addSubview(containView)
+        containView.addSubview(phoneNumTextField)
+        containView.addSubview(line1)
+        containView.addSubview(nameTextField)
+//        containView.addSubview(line2)
+//        containView.addSubview(cardNumTextField)
+        
+        self.addSubview(submitButton)
+        self.addSubview(historyButton)
+    }
+    
+    required init?(coder aDecoder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    override func layoutSubviews() {
+        containView.snp_makeConstraints { (make) in
+            make.left.right.equalTo(0)
+            make.top.equalTo(20)
+            make.bottom.equalTo(nameTextField.snp_bottom).offset(20)
+        }
+        
+        phoneNumTextField.snp_makeConstraints { (make) in
+            make.left.equalTo(30)
+            make.top.equalTo(20)
+            make.right.equalTo(-30)
+        }
+        
+        line1.snp_makeConstraints { (make) in
+            make.top.equalTo(phoneNumTextField.snp_bottom).offset(20)
+            make.left.right.equalTo(phoneNumTextField)
+            make.height.equalTo(1)
+        }
+
+        nameTextField.snp_makeConstraints { (make) in
+            make.left.equalTo(30)
+            make.right.equalTo(-30)
+            make.top.equalTo(line1.snp_bottom).offset(20)
+        }
+        
+//        line2.snp_makeConstraints { (make) in
+//            make.top.equalTo(nameTextField.snp_bottom).offset(20)
+//            make.left.right.equalTo(phoneNumTextField)
+//            make.height.equalTo(1)
+//        }
+//        
+//        cardNumTextField.snp_makeConstraints { (make) in
+//            make.left.equalTo(30)
+//            make.right.equalTo(-30)
+//            make.top.equalTo(line2).offset(20)
+//        }
+//        
+        submitButton.snp_makeConstraints { (make) in
+            make.left.equalTo(30)
+            make.right.equalTo(-30)
+            make.top.equalTo(containView.snp_bottom).offset(30)
+        }
+        
+        historyButton.snp_makeConstraints { (make) in
+            make.left.equalTo(50)
+            make.right.equalTo(-50)
+            make.top.equalTo(submitButton.snp_bottom).offset(30)
+        }
+    }
+    
+    private let containView = Constants.containView()
+    let phoneNumTextField: UITextField = {
+        let view = UITextField()
+        view.placeholder = "请输入购票人的手机号"
+        return view
+    } ()
+    private let line1 = Constants.splitLine()
+    let nameTextField: UITextField = {
+        let view = UITextField()
+        view.placeholder = "乘客姓名"
+        return view
+    } ()
+//    private let line2 = Constants.splitLine()
+//    let cardNumTextField: UITextField = {
+//        let view = UITextField()
+//        view.placeholder = "乘车卡卡号"
+//        return view
+//    } ()
+    
+    let submitButton: UIButton = {
+        let btn: UIButton = UIButton()
+        btn.setTitle("确定", forState: .Normal)
+        btn.tintColor = Constants.whiteWordColor
+        btn.layer.cornerRadius = 16
+        btn.setBackgroundImage(UIImage(named: "btn_login_nor"), forState: .Normal)
+        return btn
+    } ()
+
+    let historyButton: UIButton = {
+        let view = UIButton()
+        var text = NSMutableAttributedString(string: "查看关联信息记录 >>")
+        view.setAttributedTitle(text, forState: .Normal)
+        return view
+    } ()
+}

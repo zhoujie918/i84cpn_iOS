@@ -1,0 +1,87 @@
+//
+//  CPPhoneNumCheckViewController.swift
+//  i84cpn
+//
+//  Created by BenjaminRichard on 16/5/18.
+//  Copyright © 2016年 5i84. All rights reserved.
+//
+
+import UIKit
+
+class CPPhoneNumCheckViewController: CMBaseViewController, GetSMSCodeButtonDelegate {
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        title = "手机号修改"
+        view.addSubview(phoneNumCheckView)
+        phoneNumCheckView.verifyButton.delegate = self
+        phoneNumCheckView.frame = view.frame
+        phoneNumCheckView.nextStepButton.addTarget(self, action: #selector(changePhoneNum), forControlEvents: .TouchUpInside)
+    }
+    
+    override func viewWillAppear(animated: Bool) {
+        super.viewWillAppear(animated)
+    }
+    
+    override func viewDidAppear(animated: Bool) {
+        super.viewDidAppear(animated)
+        
+    }
+    
+    // 事件响应函数
+    func getSMSCode() {
+        
+        CPAFHTTPSessionManager.postWithUrlString(Constants.getSMSCodeOfChangePhoneNumURL, parameter: Constants.getBindingSMSCode(), progressBlock: { (progress) in
+            
+            }, successBlock: { (respondData) in
+                let dic:NSDictionary = respondData as! NSDictionary
+ 
+                if dic.objectForKey("success") as! Bool == true {
+
+                } else {
+                    self.phoneNumCheckView.verifyButton.remainingSeconds = 0
+                    let msg = dic.objectForKey("msg") as! String
+                    self.alertView = UIAlertView(title: "提示", message: "短信获取失败! 错误码" + msg, delegate: self, cancelButtonTitle: "确定")
+                    self.alertView?.show()
+                }
+            }, failureBlock: { (error) in
+                self.phoneNumCheckView.verifyButton.remainingSeconds = 0
+                print(error)
+        })
+    }
+    
+    func changePhoneNum(button: UIButton) {
+        let SMSCode: String = phoneNumCheckView.verifyTextField.text!
+        if SMSCode.characters.count != 0 {
+            CPAFHTTPSessionManager.postWithUrlString(Constants.checkSMSCodeOfChangePhoneNumURL, parameter: Constants.checkSMSCodeForChangePhoneNumParamWithSMSCode(SMSCode), progressBlock: { (progress) in
+                
+                }, successBlock: { (respondData) in
+                    let dic:NSDictionary = respondData as! NSDictionary
+                    let rsp: Bool = dic["success"] as! Bool
+                    if rsp {
+                        let objData: NSDictionary = dic["result"] as! NSDictionary
+                        let suc: Bool = objData.objectForKey("success") as! Bool
+                        if suc {
+                            let vc = CPChangePhoneNumViewController()
+                            self.navigationController?.pushViewController(vc, animated: true)
+                        } else {
+//                            self.msg = objData.valueForKey("msg") as? String
+                            self.msg = "验证码错误"
+                            self.alertView = UIAlertView(title: "提示", message: self.msg, delegate: self, cancelButtonTitle: "确定")
+                            self.alertView?.show()
+                        }
+                        
+                    }
+                }, failureBlock: { (error) in
+                    print(error)
+            })
+        } else {
+            alertView = UIAlertView(title: "提示", message: "请输入短信验证码", delegate: self, cancelButtonTitle: "确定")
+            alertView?.show()
+        }
+    }
+    
+    private let phoneNumCheckView = CPPhoneNumCheckView()
+    private var alertView: UIAlertView?
+    private var msg: String?
+}

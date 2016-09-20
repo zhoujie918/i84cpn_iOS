@@ -1,0 +1,29 @@
+//
+//  CPFAQsDetailViewController.swift
+//  i84cpn
+//
+//  Created by BenjaminRichard on 16/5/19.
+//  Copyright © 2016年 5i84. All rights reserved.
+//
+
+import UIKit
+
+class CPFAQsDetailViewController: UIViewController {
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        title = "常见问题"
+        view.addSubview(FAQsDetailView)
+    }
+    
+    override func viewWillAppear(animated: Bool) {
+        super.viewWillAppear(animated)
+        FAQsDetailView.frame = view.frame
+    }
+    
+    override func viewDidAppear(animated: Bool) {
+        super.viewDidAppear(animated)
+    }
+
+    private let FAQsDetailView = CPFAQsDetailView()
+}

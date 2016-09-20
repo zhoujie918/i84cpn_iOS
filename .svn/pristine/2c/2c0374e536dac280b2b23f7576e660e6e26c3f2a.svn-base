@@ -1,0 +1,81 @@
+//
+//  CPAddressSearchController.swift
+//  i84cpn
+//
+//  Created by 周杰 on 16/5/24.
+//  Copyright © 2016年 5i84. All rights reserved.
+//
+
+import UIKit
+
+class CPAddressSearchController: UIViewController,addressSearchDelegate {
+    private var addressSearchView=CPAddressSearchView()
+    var schoolValue:String!
+    var gradeValue:String!
+    var singleTrip:Int!
+    var switchTag:Int!
+    var addressValue:String!
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        addressSearchView.delegate=self
+        self.title="线路搜索"
+        self.view.backgroundColor=COLOR_BACKGROUND_GRAY
+        self.view.addSubview(addressSearchView)
+        addressSearchView.snp_makeConstraints { (make) in
+            make.edges.equalTo(self.view).offset(UIEdgeInsetsZero)
+        }
+        
+        addressSearchView.headerGest.addTarget(self, action: #selector(CPAddressSearchController.goToLineResultCtl))
+        addressSearchView.cellGest.addTarget(self, action: #selector(CPAddressSearchController.goLineResultCtl))
+    }
+    //点击当前定位地址跳转
+    func goToLineResultCtl(){
+        let vc=CPLineSearchResultController()
+        vc.schoolAddress=schoolValue
+        vc.grade=gradeValue
+        vc.departType=switchTag
+        vc.rang=singleTrip
+        vc.houseAddress=addressSearchView.locationResult
+        vc.houseLon=addressSearchView.currentLongitude
+        vc.houseLat=addressSearchView.CurrentLatitude
+        self.hidesBottomBarWhenPushed=true
+        self.navigationController?.pushViewController(vc, animated: true)
+        self.hidesBottomBarWhenPushed=false
+    }
+    //点击POI地址进行跳转
+    func goLineResultCtl() {
+        let vc=CPLineSearchResultController()
+        vc.schoolAddress=schoolValue
+        vc.grade=gradeValue
+        vc.departType=switchTag
+        vc.rang=singleTrip
+        vc.houseAddress=addressSearchView.selectedAddress
+        vc.houseLon=addressSearchView.selectedLon
+        vc.houseLat=addressSearchView.selectedLat
+//        print(vc.houseAddress)
+        self.hidesBottomBarWhenPushed=true
+        self.navigationController?.pushViewController(vc, animated: true)
+        self.hidesBottomBarWhenPushed=false
+    }
+
+
+    override func didReceiveMemoryWarning() {
+        super.didReceiveMemoryWarning()
+        // Dispose of any resources that can be recreated.
+    }
+    override func viewWillAppear(animated: Bool) {
+        self.navigationController?.navigationBar.barTintColor=COLOR_MAIN
+    }
+    
+
+    /*
+    // MARK: - Navigation
+
+    // In a storyboard-based application, you will often want to do a little preparation before navigation
+    override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
+        // Get the new view controller using segue.destinationViewController.
+        // Pass the selected object to the new view controller.
+    }
+    */
+
+}

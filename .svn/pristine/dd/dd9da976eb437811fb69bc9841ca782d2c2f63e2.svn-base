@@ -1,0 +1,111 @@
+//
+//  CPCustomLineViewController.swift
+//  i84cpn
+//
+//  Created by 周杰 on 16/5/26.
+//  Copyright © 2016年 5i84. All rights reserved.
+//
+
+import UIKit
+
+class CPCustomLineController: UIViewController {
+    
+    var customLineView = CPCustomLineView()
+    var stationData = CPCustomLineModel()
+    var latitude : Float = 0.0
+    var longitude : Float = 0.0
+    
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        self.title="订制线路"
+        
+        self.view.addSubview(customLineView)
+        customLineView.snp_makeConstraints { (make) in
+            make.edges.equalTo(0)
+        }
+        
+        let homePageModel = CPHomePageModel()
+        let cityId = NSUserDefaults.standardUserDefaults().valueForKey("cityId") as! Int
+        let cityIdStr=String(cityId)
+        weak var weakSelf = self
+        //获取学校站点数据
+        homePageModel.dropSchoolLoadData(Constants.noauthApiURL, para: ["action":"line_station", "cityId":cityIdStr]) { (success) in
+            weakSelf?.customLineView.schoolData = success
+        }
+        //获取年级数据
+        homePageModel.dropGradeLoadData(Constants.noauthApiURL, para: ["action":"line_class"]) { (success) in
+            weakSelf?.customLineView.gradeData = success
+        }
+        
+        //定义代码块
+        customLineView.initWithClosure({ (tag) in
+            if tag == 1{    //前往地址选择界面
+                
+                let addressVC=CPAddressSearchController()
+                addressVC.isGetAddress = true
+                self.navigationController?.pushViewController(addressVC, animated: true)
+                
+            }else if tag == 2{  //提交
+                
+                let hud = MBProgressHUD.showHUDAddedTo(weakSelf!.navigationController?.view, animated: true)
+                hud.labelText = "正在提交..."
+                var param : Dictionary<String,AnyObject>
+                if weakSelf!.customLineView.isRecNstation == 1{
+                    let stationId = weakSelf!.stationData.stations![weakSelf!.customLineView.selecteStation].stationId
+                    param = ["action":"add_custom_line", "school":weakSelf!.customLineView.selectedSchool!, "grade":weakSelf!.customLineView.selectedGrade!, "departAddr":weakSelf!.customLineView.strAddress!, "departLon":weakSelf!.longitude, "departLat":weakSelf!.latitude, "departTime":weakSelf!.customLineView.departTime!, "isRecNstation":1, "stationId":stationId, "isNeedBack":weakSelf!.customLineView.isNeedBack, "entrCode":"2"]
+                }else{
+                    param = ["action":"add_custom_line", "school":weakSelf!.customLineView.selectedSchool!, "grade":weakSelf!.customLineView.selectedGrade!, "departAddr":weakSelf!.customLineView.strAddress!, "departLon":weakSelf!.longitude, "departLat":weakSelf!.latitude, "departTime":weakSelf!.customLineView.departTime!, "isRecNstation":0, "isNeedBack":weakSelf!.customLineView.isNeedBack, "entrCode":"2"]
+                }
+                print(param)
+                CPAFHTTPSessionManager.postWithUrlString(Constants.userInfoURL, parameter: param, progressBlock: nil, successBlock: { (response) in
+                    hud.hide(true)
+                    print(response)
+                    let dicResponse : NSDictionary = response as! NSDictionary
+                    if (dicResponse["success"]!).intValue == 1{
+                        let dic = dicResponse["result"] as! NSDictionary
+                        if  (dic["success"]!).intValue == 1{
+                            self.showAlert("恭喜您,提交成功!")
+                        }else{
+                            self.showAlert("提交失败")
+                        }
+                    }else{
+                        self.showAlert("提交失败")
+                    }
+                    }, failureBlock: { (error) in
+                        hud.hide(true)
+                        print(error)
+                        self.showAlert("请求服务器出错,请稍后再试")
+                })
+            }
+        })
+    }
+    
+    override func viewWillAppear(animated: Bool) {
+        let dic = NSUserDefaults.standardUserDefaults().objectForKey("CustomLineAddress")
+        if dic != nil{
+            //界面赋值
+            customLineView.strAddress = dic!["address"] as? String
+            //请求附近站点数据
+            latitude = (dic!["latitude"] as? Float)!
+            longitude = (dic!["longitude"] as? Float)!
+            weak var weakSelf = self
+            CPCustomLineModel.getNearStationData(["action":"get_nearby_stations", "latitude":latitude, "longitude":longitude]  , successClosure: { (success) in
+                weakSelf?.stationData = success!
+                weakSelf!.customLineView.stationData = success?.nameList
+                }, fail: { (fail) in
+                    print("fail: ",fail)
+            })
+        }
+    }
+    
+    func showAlert(message : String) {
+        let alertV = UIAlertView.init(title: "提示", message: message, delegate: nil, cancelButtonTitle: "确定")
+        alertV.show()
+    }
+    
+    override func didReceiveMemoryWarning() {
+        super.didReceiveMemoryWarning()
+        // Dispose of any resources that can be recreated.
+    }
+
+}

@@ -1,0 +1,39 @@
+//
+//  CPOrderListView.swift
+//  i84cpn
+//
+//  Created by BenjaminRichard on 16/5/25.
+//  Copyright © 2016年 5i84. All rights reserved.
+//
+
+import UIKit
+
+class CPOrderListView: UIView {
+
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        self.addSubview(tableView)
+    }
+    
+    required init?(coder aDecoder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    override func layoutSubviews() {
+        tableView.snp_makeConstraints { (make) in
+            make.left.equalTo(0)
+            make.top.equalTo(self).offset(0)
+            make.right.equalTo(self)
+            make.height.equalTo(Constants.screenHeight - 118)
+        }
+    }
+    
+    let tableView: UITableView = {
+        let view = UITableView()
+        view.backgroundColor = Constants.paleBGColor
+        view.separatorStyle = UITableViewCellSeparatorStyle.None
+        view.rowHeight = 70
+        return view
+    } ()
+
+}

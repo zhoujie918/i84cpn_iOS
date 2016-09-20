@@ -1,0 +1,77 @@
+//
+//  CPRideInfoSettingViewController.swift
+//  i84cpn
+//
+//  Created by BenjaminRichard on 16/5/18.
+//  Copyright © 2016年 5i84. All rights reserved.
+//
+
+import UIKit
+
+class CPRideInfoSettingViewController: CMBaseViewController {
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        title = "乘车信息设置"
+        view.addSubview(rideInfoSettingView)
+        
+        rideInfoSettingView.frame = view.frame
+    }
+    
+    override func viewWillAppear(animated: Bool) {
+        super.viewWillAppear(animated)
+        loadData()
+    }
+    
+    override func viewDidAppear(animated: Bool) {
+        super.viewDidAppear(animated)
+        
+        rideInfoSettingView.receiveRideInfoMessageSwitch.addTarget(self, action: #selector(rideInfoPush), forControlEvents: .ValueChanged)
+        rideInfoSettingView.SMSPushSwitch.addTarget(self, action: #selector(rideInfoPush), forControlEvents: .ValueChanged)
+    }
+    
+    func loadData() {
+        CPAFHTTPSessionManager.postWithUrlString(Constants.userInfoURL, parameter: Constants.getRiderSettingDetail(), progressBlock: { (progress) in
+            
+            }, successBlock: { (respondData) in
+                let dic:NSDictionary = respondData as! NSDictionary
+                let rsp: Bool = dic["success"] as! Bool
+                if rsp {
+                    let objData: NSDictionary = dic["result"] as! NSDictionary
+                    if objData.objectForKey("isRecRmsg") != nil {
+                        self.rideInfoSettingView.receiveRideInfoMessageSwitch.on = objData.objectForKey("isRecRmsg") as! Bool
+                    }
+                    
+                    if objData.objectForKey("isRecSmsg") != nil {
+                        
+                    }
+
+                }
+            }, failureBlock: { (error) in
+                print(error)
+        })
+    }
+    
+    func rideInfoPush(swh: UISwitch) {
+        let isRecRmsg = rideInfoSettingView.receiveRideInfoMessageSwitch.on ? 1: 0
+        let isRecSmsg = rideInfoSettingView.SMSPushSwitch.on ? 1 : 0
+        
+        CPAFHTTPSessionManager.postWithUrlString(Constants.userInfoURL, parameter: Constants.setRidePush(isRecRmsg, isRecSmsg: isRecSmsg), progressBlock: { (progress) in
+            
+            }, successBlock: { (respondData) in
+                var objData = respondData as! NSDictionary
+                if objData.objectForKey("success") as! Bool {
+                    objData = objData.objectForKey("result") as! NSDictionary
+                    if objData.objectForKey("success") as! Bool {
+                        Constants.dPrint("成功")
+                    } else {
+                        Constants.dPrint(objData)
+                    }
+                }
+            }) { (error) in
+                Constants.dPrint(error)
+        }
+    }
+    
+    private let rideInfoSettingView = CPRideInfoSettingView()
+}

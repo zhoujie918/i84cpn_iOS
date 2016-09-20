@@ -1,0 +1,152 @@
+//
+//  CPUserModel.swift
+//  i84cpn
+//
+//  Created by BenjaminRichard on 16/5/17.
+//  Copyright © 2016年 5i84. All rights reserved.
+//
+
+import UIKit
+
+protocol UserModelDelegate {
+    func userCenterPageViewReloadData()
+//    func openURL()
+}
+
+class CPUserModel: NSObject, BMKLocationServiceDelegate, BMKGeoCodeSearchDelegate {
+    static var delegate: UserModelDelegate?
+    
+    class func shareUserInfoModel() -> CPUserModel{
+        struct Singleton{
+            static var onceToken : dispatch_once_t = 0
+            static var single:CPUserModel?
+        }
+        dispatch_once(&Singleton.onceToken,{
+            Singleton.single=shareUserInfoModel()
+            }
+        )
+        return Singleton.single!
+    }
+    
+    static func clearData()  {
+        realName = nil
+        imageName = nil
+        petName = nil
+        idNo = nil
+        phoneNum = nil
+        authDate = nil
+        isLogin = false
+    }
+    
+    static func getUserInfo() {
+        CPAFHTTPSessionManager.postWithUrlString(Constants.userInfoURL, parameter: Constants.getUserInfoParam, progressBlock: { (progress) in
+            
+            }, successBlock: { (respondData) in
+                let dic:NSDictionary = respondData as! NSDictionary
+                let rsp: Bool = dic["success"] as! Bool
+                if rsp {
+                    let objData: NSDictionary = dic["result"] as! NSDictionary
+                    let imageName = objData.valueForKey("userPicture")
+                    let petName = objData.valueForKey("nickName")
+                    let realName = objData.valueForKey("realName")
+                    let idNo = objData.valueForKey("idNo")
+                    let mobile = objData.valueForKey("mobile")
+                    
+                    if (imageName != nil) {
+                        CPUserModel.imageName = imageName as? String
+                    }
+                    if (petName != nil) {
+                        CPUserModel.petName = petName as? String
+                    }
+                    if (realName != nil) {
+                        CPUserModel.realName = realName as? String
+                    }
+                    if (idNo != nil) {
+                        CPUserModel.idNo = idNo as? String
+                    }
+                    if (mobile != nil) {
+                        CPUserModel.encryptedPhoneNum = mobile as? String
+                    }
+                    
+                    if delegate != nil {
+                        delegate?.userCenterPageViewReloadData()
+                    }
+                } else {
+                    Constants.dPrint(dic)
+                    CPUserModel.clearData()
+                    let errorCode = dic.objectForKey("errorCode") as? String
+                    if errorCode == "00001" {
+//                        CPUserModel.userLogin()
+                    }
+                }
+        }) { (error) in
+            print(error)
+        }
+    }
+    
+    static func login() {
+        isLogin = true
+    }
+    
+    func getVersion() {
+        CPAFHTTPSessionManager.postWithUrlString(Constants.noauthApiURL, parameter: Constants.getVersion(), progressBlock: nil, successBlock: { (respondData) in
+            let dic:NSDictionary = respondData as! NSDictionary
+            let rsp: Bool = dic["success"] as! Bool
+            if rsp {
+                var objData: NSDictionary = dic["result"] as! NSDictionary
+                if objData.objectForKey("success") as! Bool {
+                    objData = objData.objectForKey("result") as! NSDictionary
+                    let version = objData.objectForKey("version")
+                    let code = objData.objectForKey("code")
+                    Constants.dPrint(version)
+                    Constants.dPrint(code)
+                }
+            }
+            }) { (error) in
+                Constants.dPrint(error)
+        }
+    }
+    
+    static func userLogin() {
+        let userName = NSUserDefaults.standardUserDefaults().valueForKey("UserNameKey") as! String!
+        let pwd = NSUserDefaults.standardUserDefaults().valueForKey("PwdKey") as! String!
+        if  pwd != nil && pwd.characters.count != 0 {
+//            let param = ["username": userName,"password":pwd, "manage":"member", "isApp":"1"];
+            
+            CPAFHTTPSessionManager.postWithUrlString(Constants.loginURL , parameter: Constants.loginParms(userName, password: pwd), progressBlock: { (progress) in
+                
+                }, successBlock: { (respondData) in
+                    let dic:NSDictionary = respondData as! NSDictionary
+                    let success: Bool = dic["success"] as! Bool
+                    if success == true {
+                        CPUserModel.isLogin = true
+                        Constants.dPrint("login success")
+                        if dic.objectForKey("id") != nil {
+                            JPUSHService.setAlias("417eac30", callbackSelector: nil, object: self)
+//                            JPUSHService.setAlias(dic.objectForKey("id") as! String, callbackSelector: nil, object: self)
+                            CPUserModel.getUserInfo()
+                        }
+                    } else {
+                        Constants.dPrint(dic)
+                    }
+                }, failureBlock: { (error) in
+                    print(error)
+            })
+            
+        }
+    }
+    
+    static func getLoginState() -> Bool{
+        return isLogin
+    }
+    
+    static var isLogin = false
+    static var phoneNum: String?
+    static var password: String?
+    static var encryptedPhoneNum: String?
+    static var realName: String?
+    static var petName: String?
+    static var idNo: String?
+    static var imageName: String?
+    static var authDate: String?
+}

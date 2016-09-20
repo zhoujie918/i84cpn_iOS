@@ -1,0 +1,77 @@
+//
+//  CPPetNameViewController.swift
+//  i84cpn
+//
+//  Created by BenjaminRichard on 16/5/12.
+//  Copyright © 2016年 5i84. All rights reserved.
+//
+
+import UIKit
+
+class CPPetNameViewController: CMBaseViewController {
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        title = "用户昵称"
+        view.addSubview(petNameView)
+        saveButton = UIBarButtonItem(title: "保存", style: UIBarButtonItemStyle.Done, target: self, action: #selector(saveNickName))
+        self.navigationItem.rightBarButtonItem = saveButton
+        petNameView.frame = view.frame
+        
+    }
+    
+    override func viewWillAppear(animated: Bool) {
+        super.viewWillAppear(animated)
+    }
+    
+    override func viewDidAppear(animated: Bool) {
+        super.viewDidAppear(animated)
+    }
+    
+    func saveNickName(button: UIBarButtonItem) {
+        let nickName: String = petNameView.petTextField.text!
+       
+        if nickName.characters.count == 0 {
+            alertView = UIAlertView(title: "提示", message: "请输入昵称", delegate: self, cancelButtonTitle: "确定")
+            alertView!.show()
+        }  else {
+            let regex = "[a-zA-Z0-9\u{4e00}-\u{9fa5}][a-zA-Z0-9\u{4e00}-\u{9fa5}]+";
+            let pred = NSPredicate(format: "SELF MATCHES %@", regex)
+            if pred.evaluateWithObject(nickName) == false {
+                petNameView.tipLabel.text = "请删除标点符号或特殊符号"
+                petNameView.tipLabel.textColor = Constants.redWordColor
+                return
+            }
+            CPAFHTTPSessionManager.postWithUrlString(Constants.userInfoURL, parameter: Constants.setPetNameParamWithNickName(nickName), progressBlock: { (progress) in
+                
+                }, successBlock: { (respondData) in
+                    let dic:NSDictionary = respondData as! NSDictionary
+                    let rsp: Bool = dic["success"] as! Bool
+                    if rsp {
+                        let objData: NSDictionary = dic["result"] as! NSDictionary
+                        let suc: Bool = objData.objectForKey("success") as! Bool
+                        let msg: String
+                        if suc {
+                            let hub = MBProgressHUD.showHUDAddedTo(self.navigationController?.view, animated: true)
+                            hub.labelText = "修改成功"
+                            CPUserModel.petName = nickName
+                            self.navigationController?.popViewControllerAnimated(true)
+                            hub.hide(true, afterDelay: 0.7)
+                        } else {
+                            msg = (objData.valueForKey("msg") as? String)!
+                            self.alertView = UIAlertView(title: "提示", message: msg, delegate: self, cancelButtonTitle: "确定")
+                            self.alertView?.show()
+                        }
+                    }
+                }, failureBlock: { (error) in
+                    print(error)
+            })
+        }
+        
+    }
+    
+    private let petNameView = CPPetNameView()
+    private var saveButton:UIBarButtonItem?
+    private var alertView: UIAlertView?
+    
+}

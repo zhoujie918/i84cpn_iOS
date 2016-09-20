@@ -1,0 +1,28 @@
+//
+//  CPViewImageViewController.swift
+//  i84cpn
+//
+//  Created by BenjaminRichard on 16/6/20.
+//  Copyright © 2016年 5i84. All rights reserved.
+//
+
+import UIKit
+
+class CPViewImageViewController: CMBaseViewController {
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        self.view.addSubview(imageView)
+        imageView.frame = self.view.frame
+    }
+    
+    func setImageWithImageName(imgName: String) {
+        imageView.loadImage(imgName)
+    }
+    
+    override func touchesBegan(touches: Set<UITouch>, withEvent event: UIEvent?) {
+        self.dismissViewControllerAnimated(true, completion: nil)
+    }
+    
+    private let imageView = CPViewImageView()
+}

@@ -1,0 +1,152 @@
+//
+//  CPAreaDataModel.swift
+//  i84cpn
+//
+//  Created by BenjaminRichard on 16/5/20.
+//  Copyright © 2016年 5i84. All rights reserved.
+//
+
+import UIKit
+
+protocol AreaDataModelDelegate {
+    func reloadData(type: Int)
+}
+class CPAreaDataModel: NSObject {
+    var delegate : AreaDataModelDelegate?
+    override init() {
+        super.init()
+        initData()
+    }
+    // 初始化数据
+    private func initData() {
+        CPAFHTTPSessionManager.postWithUrlString(Constants.noauthApiURL, parameter: Constants.getProvinceList(), progressBlock: { (progress) in
+            
+            }, successBlock: { (respondData) in
+                let dic:NSDictionary = respondData as! NSDictionary
+                let rsp: Bool = dic["success"] as! Bool
+                if rsp {
+                    self.provinces = dic["result"] as? NSArray
+                    var provinceDic: Dictionary<String, String> = self.provinces![0] as! Dictionary<String, String>
+                    var dictCode:String = provinceDic["dictCode"]!
+                    CPAFHTTPSessionManager.postWithUrlString(Constants.noauthApiURL, parameter: Constants.getCityListParamWithProvinceCode(dictCode), progressBlock: { (progress) in
+                
+                        }, successBlock: { (respondData) in
+                            let dic:NSDictionary = respondData as! NSDictionary
+                            let rsp: Bool = dic["success"] as! Bool
+                            if rsp {
+                                self.cityNames = dic["result"] as? NSArray
+                                provinceDic = self.cityNames![0] as! Dictionary<String, String>
+                                dictCode = provinceDic["dictCode"]!
+                                CPAFHTTPSessionManager.postWithUrlString(Constants.noauthApiURL, parameter: Constants.getCountyListWithCityCode(dictCode), progressBlock: { (progress) in
+                
+                                    }, successBlock: { (respondData) in
+                                        let dic:NSDictionary = respondData as! NSDictionary
+                                        let rsp: Bool = dic["success"] as! Bool
+                                        if rsp {
+                                            self.counties = dic["result"] as? NSArray
+                                            
+                                        }
+                                    }, failureBlock: { (error) in
+                                        print(error)
+                                })
+                            }
+                        }, failureBlock: { (error) in
+                            print(error)
+                    })
+                }
+            }, failureBlock: { (error) in
+                print(error)
+        })
+    }
+    
+    
+    // 根据选择的省返回市和县
+    func reloadDataByProvince(index: Int) {
+        var dictCode = self.provinces![index]["dictCode"] as! String
+        CPAFHTTPSessionManager.postWithUrlString(Constants.noauthApiURL, parameter: Constants.getCityListParamWithProvinceCode(dictCode), progressBlock: { (progress) in
+            
+            }, successBlock: { (respondData) in
+                let dic:NSDictionary = respondData as! NSDictionary
+                let rsp: Bool = dic["success"] as! Bool
+                if rsp {
+                    self.cityNames = dic["result"] as? NSArray
+                    var provinceDic: Dictionary<String, String> = self.cityNames![0] as! Dictionary<String, String>
+                    dictCode = provinceDic["dictCode"]!
+                    CPAFHTTPSessionManager.postWithUrlString(Constants.noauthApiURL, parameter: Constants.getCountyListWithCityCode(dictCode), progressBlock: { (progress) in
+                        
+                        }, successBlock: { (respondData) in
+                            let dic:NSDictionary = respondData as! NSDictionary
+                            let rsp: Bool = dic["success"] as! Bool
+                            if rsp {
+                                self.counties = dic["result"] as? NSArray
+                                if self.delegate != nil {
+                                    self.delegate?.reloadData(0)
+                                    self.reloadDataByCity(0)
+                                }
+                            }
+                        }, failureBlock: { (error) in
+                            print(error)
+                    })
+                }
+            }, failureBlock: { (error) in
+                print(error)
+        })
+    }
+    
+    // 根据选择的城市返回县
+    func reloadDataByCity(index: Int) {
+        let dictCode = self.cityNames![index]["dictCode"] as! String
+        CPAFHTTPSessionManager.postWithUrlString(Constants.noauthApiURL, parameter: Constants.getCountyListWithCityCode(dictCode), progressBlock: { (progress) in
+            
+            }, successBlock: { (respondData) in
+                let dic:NSDictionary = respondData as! NSDictionary
+                let rsp: Bool = dic["success"] as! Bool
+                if rsp {
+                    self.counties = dic["result"] as? NSArray
+                    if self.delegate != nil {
+                        self.delegate?.reloadData(1)
+                    }
+                }
+            }, failureBlock: { (error) in
+                print(error)
+        })
+
+    }
+    
+    func getProvinceNameArray() -> NSArray {
+        return provinces!
+    }
+    
+    func getCityNameArray() -> NSArray {
+        return cityNames!
+    }
+    
+    func getCountyArray() -> NSArray {
+        return counties!
+    }
+    
+    func getProvinceId() -> String {
+        return provinces![provinceRow].objectForKey("dictCode") as! String
+    }
+    
+    func getCityId() -> String {
+        return cityNames![cityRow].objectForKey("dictCode") as! String
+    }
+    
+    func getCountyId() -> String {
+        return counties![countyRow].objectForKey("dictCode") as! String
+    }
+    
+    // 返回所选的地址
+    func getAddress() -> String {
+        return (provinces![provinceRow].objectForKey("dictName") as! String) + (cityNames![cityRow].objectForKey("dictName") as! String) + (counties![countyRow].objectForKey("dictName") as! String)
+    }
+    
+    private var provinces: NSArray?
+    private var cityNames: NSArray?
+    private var counties: NSArray?
+    
+    var provinceRow: Int = 0
+    var cityRow: Int = 0
+    var countyRow: Int = 0
+}

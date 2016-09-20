@@ -1,0 +1,72 @@
+//
+//  CPChooseSeatModel.m
+//  i84cpn
+//
+//  Created by 爱巴士-余夏伟 on 16/5/28.
+//  Copyright © 2016年 5i84. All rights reserved.
+//
+
+#import "CPChooseSeatModel.h"
+
+@implementation CPChooseSeatModel
+
++(NSArray *)getCollectViewData:(NSDictionary *)dic{
+    NSMutableArray *arrSeat = [NSMutableArray array];   //0:过道  1:已被选   2:无效   3:可选
+   
+    int seatRow = [dic[@"modelParam"][@"seatRow"] intValue];   //行数
+    NSArray *arrLetter = dic[@"strucMap"][@"letter"];
+    int seatTotalColumn = (int)arrLetter.count;  //总列数
+    int seatLeftColumn = [dic[@"modelParam"][@"seatLeft"] intValue];   //左边列数
+//    int seatRightColumn = [dic[@"modelParam"][@"seatRight"] intValue]; //右边列数
+    int seatMidNumber = seatTotalColumn - seatLeftColumn;   //过道列
+    
+    //形成一个全部可选，过道无座的数组
+    for (int i=0; i<seatRow; i++) {
+        for (int j=0; j<seatTotalColumn;j++ ) {
+            if (j == seatMidNumber) {
+                [arrSeat addObject:@"0"];
+            }else{
+                [arrSeat addObject:@"3"];
+            }
+        }
+    }
+    
+
+    //填入已被选座位到数组
+    NSArray *arrSoldSeat = dic[@"soldSeat"];
+    int soldSeatNum = (int)arrSoldSeat.count;
+    for (int i=0; i<soldSeatNum; i++) {
+        NSString *strSeat = arrSoldSeat[i];
+        NSInteger length = strSeat.length;
+        int num1 = [[strSeat substringWithRange:NSMakeRange(0, length-1)] intValue];
+        int num2 = [strSeat characterAtIndex:length-1] - 65;
+        int num = (num1-1)*seatTotalColumn + num2;
+        [arrSeat replaceObjectAtIndex:num withObject:@"1"];
+    }
+    
+    
+    //填入无效座位到数组
+    NSArray *arrInvalidSeat = dic[@"invalidSeatNo"];
+    int invalidSeatNum = (int)arrInvalidSeat.count;
+    for (int i=0; i<invalidSeatNum; i++) {
+        NSString *strSeat = arrInvalidSeat[i];
+        NSInteger length = strSeat.length;
+        int num1 = [[strSeat substringWithRange:NSMakeRange(0, length-1)] intValue];
+        int num2 = [strSeat characterAtIndex:length-1] - 65;
+        int num = (num1-1)*seatTotalColumn + num2;
+        [arrSeat replaceObjectAtIndex:num withObject:@"2"];
+    }
+    
+    return arrSeat;
+}
+
+
++(NSString *)transformSeatNo:(int)index column:(int)Column{
+    int row = index/Column + 1; //行数
+    NSString *character = [NSString stringWithFormat:@"%c",index%Column + 65];  //列数
+    NSString *seatNo = [NSString stringWithFormat:@"%d%@",row,character];
+    return seatNo;
+}
+
+
+@end

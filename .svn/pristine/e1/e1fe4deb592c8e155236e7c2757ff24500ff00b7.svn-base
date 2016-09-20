@@ -1,0 +1,179 @@
+//
+//  CPChooseSeatController.m
+//  i84cpn
+//
+//  Created by 爱巴士-余夏伟 on 16/5/28.
+//  Copyright © 2016年 5i84. All rights reserved.
+//
+
+#import "CPChooseSeatController.h"
+#import "CPChooseSeatModel.h"
+#import "CPSeatCollectionViewCell.h"
+#import "CPAlipayModel.h"
+
+
+@interface CPChooseSeatController () <UICollectionViewDelegate,UICollectionViewDataSource,UIAlertViewDelegate>{
+    int seatColumn;
+    float insert;
+    NSIndexPath *selectedIndex;
+    NSString *selectedSeatNo;
+}
+
+@property(nonatomic,strong)UICollectionView *collectV;
+@property(nonatomic,strong)NSArray *arrSeat;
+
+@end
+
+@implementation CPChooseSeatController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    
+    
+    //导航栏右边按钮
+    UIButton *btnAllselect = [UIButton buttonWithType:UIButtonTypeRoundedRect];
+    [btnAllselect setTitle:@"确定" forState:UIControlStateNormal];
+    [btnAllselect setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
+    btnAllselect.layer.borderColor = [UIColor yellowColor].CGColor;
+    btnAllselect.layer.borderWidth = 1;
+    btnAllselect.frame = CGRectMake(0, 0, 35, 45);
+    [btnAllselect addTarget:self action:@selector(confirm) forControlEvents:UIControlEventTouchUpInside];
+    self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc]initWithCustomView:btnAllselect];
+    
+    
+    insert = SCREEN_WIDTH / 3 / seatColumn;
+    UICollectionViewFlowLayout  *layout=[[UICollectionViewFlowLayout  alloc]init];
+    layout.headerReferenceSize = CGSizeMake(SCREEN_WIDTH, 80);
+    layout.minimumInteritemSpacing = insert/2;
+    self.collectV=[[UICollectionView  alloc]initWithFrame:CGRectMake(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT) collectionViewLayout:layout];
+    self.collectV.backgroundColor=[UIColor whiteColor];
+    self.collectV.delegate=self;
+    self.collectV.dataSource=self;
+    UINib  *nib =[UINib  nibWithNibName:@"CPSeatCollectionViewCell" bundle:[NSBundle  mainBundle]];
+    UINib  *nibHeader =[UINib  nibWithNibName:@"CPChooseSeatHeaderView" bundle:[NSBundle  mainBundle]];
+    [self.collectV registerNib:nibHeader forSupplementaryViewOfKind:UICollectionElementKindSectionHeader withReuseIdentifier:@"CPChooseSeatHeaderView"];
+    for (int i=0; i<self.arrSeat.count; i++) {
+        NSString *strCell = [NSString stringWithFormat:@"cell%d",i];
+        [self.collectV  registerNib:nib forCellWithReuseIdentifier:strCell];
+    }
+    [self.view addSubview:self.collectV];
+}
+
+
+-(void)setDicData:(NSDictionary *)dicData{
+    if (dicData) {
+        _dicData = dicData;
+        seatColumn = (int)[dicData[@"strucMap"][@"letter"] count];
+        self.arrSeat = [CPChooseSeatModel getCollectViewData:dicData];
+        NSLog(@"seat : %@",self.arrSeat);
+    }
+}
+
+//返回cell的头部视图
+- (UICollectionReusableView *)collectionView:(UICollectionView *)collectionView viewForSupplementaryElementOfKind:(NSString *)kind atIndexPath:(NSIndexPath *)indexPath{
+    
+    UICollectionReusableView *reusableview = [[UICollectionReusableView alloc] init];
+    if (kind == UICollectionElementKindSectionHeader){
+        UICollectionReusableView *headerView = [collectionView dequeueReusableSupplementaryViewOfKind:UICollectionElementKindSectionHeader withReuseIdentifier:@"CPChooseSeatHeaderView" forIndexPath:indexPath];
+        reusableview = headerView;
+    }
+    return reusableview;
+}
+
+//返回cell的个数
+-(NSInteger)collectionView:(UICollectionView *)collectionView numberOfItemsInSection:(NSInteger)section{
+    return self.arrSeat.count;
+}
+
+//返回cell的样式
+-(UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath{
+    NSString *strCell = [NSString stringWithFormat:@"cell%ld",(long)indexPath.item];
+    CPSeatCollectionViewCell  *cell=[collectionView dequeueReusableCellWithReuseIdentifier:strCell forIndexPath:indexPath];
+    [cell setCellWithStatus:[self.arrSeat[indexPath.item] intValue]];
+    if (indexPath == selectedIndex) {
+        cell.imageV.image = [UIImage imageNamed:@"pic_selected"];
+    }
+    return cell;
+}
+
+//返回cell的大小
+-(CGSize)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout sizeForItemAtIndexPath:(NSIndexPath *)indexPath{
+    CGSize size = CGSizeMake((SCREEN_WIDTH-insert*seatColumn)/seatColumn, (SCREEN_WIDTH-(insert+5)*seatColumn)/seatColumn);
+    return size;
+}
+
+//返回每个cell 边距
+-(UIEdgeInsets)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout insetForSectionAtIndex:(NSInteger)section{
+    return UIEdgeInsetsMake(0, insert/2, 0, insert/2);
+}
+
+//点击cell的方法
+-(void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath{
+    if ([_arrSeat[indexPath.item] intValue] == 3) {
+        if (selectedIndex) {
+            CPSeatCollectionViewCell *cell = (CPSeatCollectionViewCell *)[collectionView cellForItemAtIndexPath:selectedIndex];
+            cell.imageV.image = [UIImage imageNamed:@"pic_choose"];
+        }
+        CPSeatCollectionViewCell *cell = (CPSeatCollectionViewCell *)[collectionView cellForItemAtIndexPath:indexPath];
+        cell.imageV.image = [UIImage imageNamed:@"pic_selected"];
+        selectedIndex = indexPath;
+        selectedSeatNo = [CPChooseSeatModel transformSeatNo:(int)selectedIndex.item dic:_dicData];
+        NSLog(@"选择座位号 : %@",selectedSeatNo);
+    }
+}
+
+
+#pragma mark 确定
+-(void)confirm{
+    if (selectedSeatNo) {
+        NSString *strTip = [NSString stringWithFormat:@"是否确定选择座位号:%@",selectedSeatNo];
+        UIAlertView *alertV = [[UIAlertView alloc] initWithTitle:@"提示" message:strTip delegate:self cancelButtonTitle:@"取消" otherButtonTitles:@"确定", nil];
+        [alertV show];
+    }else{
+        UIAlertView *alertV = [[UIAlertView alloc] initWithTitle:@"提示" message:@"请选择座位" delegate:nil cancelButtonTitle:@"取消" otherButtonTitles: nil];
+        [alertV show];
+    }
+}
+
+-(void)alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex{
+    if (buttonIndex == 1) {
+//        CPAlipayModel *model = [CPAlipayModel shareCPAlipayModel];
+        NSDictionary *param = [NSDictionary dictionaryWithObjectsAndKeys:@"choose_seat",@"action",_dicParam[@"lineId"],@"lineId",_dicParam[@"classesId"],@"classesId",_dicParam[@"orderNo"],@"orderNo",selectedSeatNo,@"seatNo", nil];
+        [CPAFHTTPSessionManager postWithUrlString:URL_AUTH_API parameter:param progressBlock:nil successBlock:^(id responseObject) {
+            NSDictionary *dic = (NSDictionary *)responseObject;
+            NSLog(@"选座接口返回 : %@",dic);
+            if ([dic[@"result"][@"success"] intValue] == 1) {
+                UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"提示" message:@"选座成功!" delegate:nil cancelButtonTitle:@"知道了" otherButtonTitles: nil];
+                [alert show];
+                [self.navigationController popViewControllerAnimated:YES];
+            }else{
+                UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"提示" message:@"选座失败,请重新再试" delegate:nil cancelButtonTitle:@"知道了" otherButtonTitles: nil];
+                [alert show];
+            }
+        } failureBlock:^(NSError *error) {
+            NSLog(@"error : %@",error);
+            UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"提示" message:@"服务器异常,请稍后再试" delegate:nil cancelButtonTitle:@"知道了" otherButtonTitles: nil];
+            [alert show];
+        }];
+    }
+}
+
+
+
+
+- (void)didReceiveMemoryWarning {
+    [super didReceiveMemoryWarning];
+    // Dispose of any resources that can be recreated.
+}
+
+/*
+#pragma mark - Navigation
+
+// In a storyboard-based application, you will often want to do a little preparation before navigation
+- (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender {
+    // Get the new view controller using [segue destinationViewController].
+    // Pass the selected object to the new view controller.
+}
+*/
+
+@end

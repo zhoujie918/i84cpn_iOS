@@ -1,0 +1,435 @@
+//
+//  CPUserInfoView.swift
+//  i84cpn
+//
+//  Created by BenjaminRichard on 16/5/11.
+//  Copyright © 2016年 5i84. All rights reserved.
+//
+
+import UIKit
+
+class CPUserInfoView: UIView {
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        self.backgroundColor = Constants.paleBGColor
+        scrollView.addSubview(containView)
+        containView.addSubview(headLabel)
+        containView.addSubview(headImageView)
+        containView.addSubview(headButton)
+        containView.addSubview(headLine)
+        
+        containView.addSubview(petNameTitleLabel)
+        containView.addSubview(petNameLabel)
+        containView.addSubview(petNameButton)
+        containView.addSubview(petNameLine)
+        
+        containView.addSubview(passwordLabel)
+        containView.addSubview(passwordButton)
+        containView.addSubview(passwordLine)
+        
+        containView.addSubview(nameTitleLabel)
+        containView.addSubview(nameLabel)
+        containView.addSubview(nameButton)
+        containView.addSubview(nameLine)
+        
+        if CPUserModel.idNo != nil {
+            containView.addSubview(idNoTitleLabel)
+            containView.addSubview(idNoLabel)
+            containView.addSubview(idNoButton)
+            containView.addSubview(idNoLine)
+        }
+        
+        containView.addSubview(addressLabel)
+        containView.addSubview(addressButton)
+        containView.addSubview(addressLine)
+        
+        containView.addSubview(phoneNumTitleLabel)
+        containView.addSubview(phoneNumLabel)
+        containView.addSubview(phoneNumButton)
+        containView.addSubview(phoneNumLine)
+        
+        containView.addSubview(rideInfoLabel)
+        containView.addSubview(rideInfoButton)
+        
+        self.addSubview(scrollView)
+    }
+    
+    required init?(coder aDecoder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    func reloadData() {
+
+        if (CPUserModel.imageName != nil) {
+//            CPAFHTTPSessionManager.getWithUrlString(Constants.getImageURL, parameter: Constants.getImageWithImageName(CPUserModel.imageName!), progressBlock: { (progress) in
+//                
+//                }, successBlock: { (respondData) in
+//                    let img = UIImage(data: respondData as! NSData)
+//                    self.headImageView.setImage(img, forState: .Normal)
+//                }, failureBlock: { (error) in
+//                    print(error)
+//            })
+            headImageView.sd_setImageWithURL(Constants.getSDWebImageURLWithImageName(CPUserModel.imageName!), forState: .Normal ,placeholderImage: UIImage(named: "img_default"))
+        } 
+
+
+        if (CPUserModel.petName != nil) {
+            petNameLabel.text = CPUserModel.petName
+        }
+     
+        if (CPUserModel.realName != nil) {
+            nameTitleLabel.text = "真实姓名"
+        } else {
+            nameTitleLabel.text = "实名认证"
+        }
+
+        if (CPUserModel.realName != nil) {
+            nameLabel.text = CPUserModel.realName
+        }
+        if (CPUserModel.idNo != nil) {
+            idNoLabel.text = CPUserModel.idNo
+            nameButton.hidden = true
+            idNoButton.hidden = true
+        }
+        if (CPUserModel.phoneNum?.characters.count != 0) {
+            phoneNumLabel.text = CPUserModel.encryptedPhoneNum
+        }
+
+    }
+    
+    override func layoutSubviews() {
+        scrollView.snp_makeConstraints { (make) in
+            make.left.equalTo(self)
+            make.right.equalTo(self)
+            make.top.equalTo(self)
+            make.bottom.equalTo(self)
+        }
+        
+        containView.snp_makeConstraints { (make) in
+            make.left.right.equalTo(self)
+            make.top.equalTo(scrollView).offset(20)
+            make.bottom.equalTo(rideInfoLabel.snp_bottom).offset(20)
+        }
+  
+        headLabel.snp_makeConstraints { (make) in
+            make.top.equalTo(containView).offset(35)
+            make.left.equalTo(30)
+        }
+        
+        headImageView.snp_makeConstraints { (make) in
+            make.centerY.equalTo(headLabel)
+            make.right.equalTo(headButton.snp_right).offset(-40)
+            make.height.width.equalTo(50)
+        }
+        
+        headButton.snp_makeConstraints { (make) in
+            make.centerY.equalTo(headLabel)
+            make.left.equalTo(0)
+            make.right.equalTo(self)
+        }
+        
+        headLine.snp_makeConstraints { (make) in
+            make.top.equalTo(headImageView.snp_bottom).offset(topOffset)
+            make.left.equalTo(headLabel)
+            make.right.equalTo(headButton)
+            make.height.equalTo(1)
+        }
+        
+        petNameTitleLabel.snp_makeConstraints { (make) in
+            make.left.equalTo(headLabel)
+            make.top.equalTo(headLine.snp_bottom).offset(topOffset)
+        }
+        
+        petNameLabel.snp_makeConstraints { (make) in
+            make.right.equalTo(self).offset(-40)
+            make.centerY.equalTo(petNameTitleLabel)
+        }
+        
+        petNameButton.snp_makeConstraints { (make) in
+            make.centerY.equalTo(petNameTitleLabel)
+            make.left.equalTo(0)
+            make.right.equalTo(self)
+        }
+        
+        petNameLine.snp_makeConstraints { (make) in
+            make.left.right.equalTo(headLine)
+            make.height.equalTo(headLine)
+            make.top.equalTo(petNameTitleLabel.snp_bottom).offset(topOffset)
+        }
+        
+        passwordLabel.snp_makeConstraints { (make) in
+            make.top.equalTo(petNameLine.snp_bottom).offset(10)
+            make.left.equalTo(headLabel)
+        }
+        
+        passwordButton.snp_makeConstraints { (make) in
+            make.centerY.equalTo(passwordLabel)
+            make.left.equalTo(0)
+            make.right.equalTo(self)
+        }
+        
+        
+        passwordLine.snp_makeConstraints { (make) in
+            make.left.right.equalTo(headLine)
+            make.height.equalTo(headLine)
+            make.top.equalTo(passwordLabel.snp_bottom).offset(topOffset)
+        }
+        
+        nameTitleLabel.snp_makeConstraints { (make) in
+            make.left.equalTo(headLabel)
+            make.top.equalTo(passwordLine.snp_bottom).offset(topOffset)
+        }
+        
+        nameLabel.snp_makeConstraints { (make) in
+            make.centerY.equalTo(nameTitleLabel)
+            make.right.equalTo(nameButton.snp_right).offset(-40)
+            make.width.equalTo(100)
+        }
+        
+        nameButton.snp_makeConstraints { (make) in
+            make.centerY.equalTo(nameTitleLabel)
+            make.left.equalTo(0)
+            make.right.equalTo(self)
+        }
+        
+        nameLine.snp_makeConstraints { (make) in
+            make.left.right.equalTo(headLine)
+            make.height.equalTo(headLine)
+            make.top.equalTo(nameTitleLabel.snp_bottom).offset(topOffset)
+        }
+        
+        if CPUserModel.idNo != nil {
+            idNoTitleLabel.snp_makeConstraints(closure: { (make) in
+                make.left.equalTo(headLabel)
+                make.top.equalTo(nameLine.snp_bottom).offset(topOffset)
+            })
+            
+            idNoLabel.snp_makeConstraints(closure: { (make) in
+                make.centerY.equalTo(idNoTitleLabel)
+                make.right.equalTo(idNoButton.snp_right).offset(-40)
+            })
+            
+            idNoButton.snp_makeConstraints(closure: { (make) in
+                make.centerY.equalTo(idNoTitleLabel)
+                make.left.equalTo(0)
+                make.right.equalTo(self)
+            })
+            nameButton.enabled = false
+            idNoButton.enabled = false
+            idNoLine.snp_makeConstraints(closure: { (make) in
+                make.left.right.equalTo(headLine)
+                make.top.equalTo(idNoTitleLabel.snp_bottom).offset(topOffset)
+                make.height.equalTo(1)
+            })
+        }
+        
+        addressLabel.snp_makeConstraints { (make) in
+            make.left.equalTo(headLabel)
+            if CPUserModel.idNo != nil {
+                make.top.equalTo(idNoLine).offset(topOffset)
+            } else {
+                make.top.equalTo(nameLine).offset(topOffset)
+            }
+        }
+        
+        addressButton.snp_makeConstraints { (make) in
+            make.centerY.equalTo(addressLabel)
+            make.left.equalTo(0)
+            make.right.equalTo(self)
+        }
+//        addressButton.imageEdgeInsets = UIEdgeInsets(top: 0, left: Constants.screenWidth - 30, bottom: 0, right: 20)
+        
+        addressLine.snp_makeConstraints { (make) in
+            make.left.right.equalTo(headLine)
+            make.height.equalTo(headLine)
+            make.top.equalTo(addressLabel.snp_bottom).offset(topOffset+1)
+        }
+        
+        phoneNumTitleLabel.snp_makeConstraints { (make) in
+            make.left.equalTo(headLabel)
+            make.top.equalTo(addressLine.snp_bottom).offset(topOffset)
+        }
+        
+        phoneNumLabel.snp_makeConstraints { (make) in
+            make.right.equalTo(nameLabel)
+            make.centerY.equalTo(phoneNumTitleLabel)
+        }
+        
+        phoneNumButton.snp_makeConstraints { (make) in
+            make.centerY.equalTo(phoneNumTitleLabel)
+            make.left.equalTo(0)
+            make.right.equalTo(self)
+        }
+//        phoneNumButton.imageEdgeInsets = UIEdgeInsets(top: 0, left: Constants.screenWidth - 30, bottom: 0, right: 20)
+        
+        phoneNumLine.snp_makeConstraints { (make) in
+            make.left.right.equalTo(headLine)
+            make.height.equalTo(headLine)
+            make.top.equalTo(phoneNumTitleLabel.snp_bottom).offset(topOffset)
+        }
+        
+        rideInfoLabel.snp_makeConstraints { (make) in
+            make.top.equalTo(phoneNumLine.snp_bottom).offset(topOffset)
+            make.left.equalTo(headLabel)
+        }
+        
+        rideInfoButton.snp_makeConstraints { (make) in
+            make.centerY.equalTo(rideInfoLabel)
+            make.left.equalTo(0)
+            make.right.equalTo(self)
+        }
+        scrollView.contentSize = CGSizeMake(Constants.screenWidth, rideInfoButton.frame.origin.y + 80)
+    }
+
+    let topOffset = 14.0
+    
+    // 控件
+    private let scrollView: UIScrollView = {
+        let view = UIScrollView()
+        view.backgroundColor = Constants.paleBGColor
+        return view
+    } ()
+    
+    private let containView: UIView = {
+        let view = UIView()
+        view.backgroundColor = Constants.whiteBGColor
+        return view
+    } ()
+    
+    private let headLabel: UILabel = {
+        let view = UILabel()
+        view.text = "头像"
+        return view
+    } ()
+    
+    let headImageView: UIButton = {
+        let view = UIButton()
+        if (CPUserModel.imageName != nil) {
+//            CPAFHTTPSessionManager.getWithUrlString(Constants.getImageURL, parameter: Constants.getImageWithImageName(CPUserModel.imageName!), progressBlock: { (progress) in
+//                
+//                }, successBlock: { (respondData) in
+//                    let img = UIImage(data: respondData as! NSData)
+//                    view.setImage(img, forState: .Normal)
+//                }, failureBlock: { (error) in
+//                    print(error)
+//            })
+             view.sd_setImageWithURL(Constants.getSDWebImageURLWithImageName(CPUserModel.imageName!), forState: .Normal ,placeholderImage: UIImage(named: "img_default"))
+        } else {
+            view.setImage(UIImage(named: "img_default"), forState: .Normal)
+        }
+        view.layer.cornerRadius = 50 * 0.5;
+        view.layer.masksToBounds = true;
+        return view
+    } ()
+    
+    let headButton = Constants.getRightButton()
+    private let headLine = Constants.splitLine()
+    
+    private let petNameTitleLabel: UILabel = {
+        let view = UILabel()
+        view.text = "用户昵称"
+        return view
+    } ()
+    
+    let petNameLabel: UILabel = {
+        let view = UILabel()
+        view.font = UIFont.systemFontOfSize(13)
+        view.textColor = Constants.yellowWordColor
+        if (CPUserModel.petName != nil) {
+            view.text = CPUserModel.petName
+        }
+        return view
+    } ()
+    
+    let petNameButton = Constants.getRightButton()
+    private let petNameLine = Constants.splitLine()
+    
+    private let passwordLabel: UILabel = {
+        let view = UILabel()
+        view.text = "密码修改"
+        return view
+    } ()
+    
+    let passwordButton = Constants.getRightButton()
+    private let passwordLine = Constants.splitLine()
+    
+    private let nameTitleLabel: UILabel = {
+        let view = UILabel()
+        if (CPUserModel.realName != nil) {
+            view.text = "真实姓名"
+        } else {
+            view.text = "实名认证"
+        }
+        
+        return view
+    } ()
+    
+    let nameLabel: UILabel = {
+        let view = UILabel()
+        view.font = Constants.smallFont
+        view.textAlignment = NSTextAlignment.Right
+        view.textColor = Constants.yellowWordColor
+        if (CPUserModel.realName != nil) {
+            view.text = CPUserModel.realName
+        }
+        return view
+    } ()
+    
+    let nameButton = Constants.getRightButton()
+    private let nameLine = Constants.splitLine()
+    
+    private let idNoTitleLabel: UILabel = {
+        let view = UILabel()
+        view.text = "身份证"
+        return view
+    } ()
+    
+    let idNoLabel: UILabel = {
+        let view = UILabel()
+        view.font = UIFont.systemFontOfSize(13)
+        view.textColor = Constants.yellowWordColor
+        if (CPUserModel.idNo != nil) {
+            view.text = CPUserModel.idNo
+        }
+        return view
+    } ()
+    
+    let idNoButton = Constants.getRightButton()
+    private let idNoLine = Constants.splitLine()
+    
+    private let addressLabel: UILabel = {
+        let view = UILabel()
+        view.text = "通讯地址"
+        return view
+    } ()
+    
+    let addressButton = Constants.getRightButton()
+    private let addressLine = Constants.splitLine()
+    
+    private let phoneNumTitleLabel: UILabel = {
+        let view = UILabel()
+        view.text = "绑定手机"
+        return view
+    } ()
+    
+    let phoneNumLabel: UILabel = {
+        let view = UILabel()
+        view.font = UIFont.systemFontOfSize(13)
+        view.textColor = Constants.yellowWordColor
+        if (CPUserModel.phoneNum?.characters.count != 0) {
+            view.text = CPUserModel.encryptedPhoneNum
+        }
+        return view
+    } ()
+    
+    let phoneNumButton = Constants.getRightButton()
+    private let phoneNumLine = Constants.splitLine()
+    
+    private let rideInfoLabel: UILabel = {
+        let view = UILabel()
+        view.text = "乘车信息设置"
+        return view
+    } ()
+    
+    let rideInfoButton = Constants.getRightButton()
+}

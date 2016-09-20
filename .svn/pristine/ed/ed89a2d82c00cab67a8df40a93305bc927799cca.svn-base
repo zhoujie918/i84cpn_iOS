@@ -1,0 +1,69 @@
+//
+//  CPCustomLineViewController.swift
+//  i84cpn
+//
+//  Created by 周杰 on 16/5/26.
+//  Copyright © 2016年 5i84. All rights reserved.
+//
+
+import UIKit
+
+class CPCustomLineController: UIViewController {
+    var customLineView=CPCustomLineView()
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        self.title="定制线路"
+        
+        self.view.addSubview(customLineView)
+        customLineView.snp_makeConstraints { (make) in
+            make.edges.equalTo(0)
+        }
+        
+        let homePageModel = CPHomePageModel()
+        weak var weakSelf = self
+        //获取学校站点数据
+        homePageModel.dropSchoolLoadData(Constants.noauthApiURL, para: ["action":"line_station"]) { (success) in
+            weakSelf?.customLineView.schoolData = success
+        }
+        //获取年级数据
+        homePageModel.dropGradeLoadData(Constants.noauthApiURL, para: ["action":"line_class"]) { (success) in
+            weakSelf?.customLineView.gradeData = success
+        }
+        
+        //前往地址选择界面
+        customLineView.initWithClosure({ (tag) in
+            if tag == 1{
+                let addressVC=CPAddressSearchController()
+                addressVC.isGetAddress = true
+                self.navigationController?.pushViewController(addressVC, animated: true)
+            }else if tag == 2{
+                
+            }
+        })
+    }
+    
+    override func viewWillAppear(animated: Bool) {
+        let dic = NSUserDefaults.standardUserDefaults().objectForKey("CustomLineAddress")
+        if dic != nil{
+            //界面赋值
+            customLineView.strAddress = dic!["address"] as? String
+            //请求附近站点数据
+            let latitude = (dic!["latitude"] as? Float)!
+            let longitude = (dic!["longitude"] as? Float)!
+            weak var weakSelf = self
+            CPCustomLineModel.getNearStationData(["action":"get_nearby_stations", "latitude":26.0823, "longitude":119.3257]  , successClosure: { (success) in
+                weakSelf!.customLineView.stationData = success?.nameList
+                }, fail: { (fail) in
+                    print("fail: ",fail)
+            })
+        }
+    }
+    
+    
+    override func didReceiveMemoryWarning() {
+        super.didReceiveMemoryWarning()
+        // Dispose of any resources that can be recreated.
+    }
+
+}

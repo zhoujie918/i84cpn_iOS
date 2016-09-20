@@ -1,0 +1,105 @@
+//
+//  CPHistoryTableViewCell.swift
+//  i84cpn
+//
+//  Created by Benjamin on 16/5/27.
+//  Copyright © 2016年 5i84. All rights reserved.
+//
+
+import UIKit
+
+class CPHistoryTableViewCell: UITableViewCell {
+
+    required init(coder aDecoder: NSCoder) {
+        super.init(coder: aDecoder)!
+    }
+    override init(style: UITableViewCellStyle, reuseIdentifier: String?) {
+        super.init(style: style, reuseIdentifier: reuseIdentifier)
+        self.addSubview(dateLabel)
+        self.addSubview(phoneNumLabel)
+        self.addSubview(nameLabel)
+        self.addSubview(detailLabel)
+        self.addSubview(stateLabel)
+    }
+    
+    func setCell(date:String, phoneNum:String, name: String, detail: String, state: Int) {
+        dateLabel.text = date
+        phoneNumLabel.text = phoneNum
+        nameLabel.text = name
+        detailLabel.text = detail
+        switch state {
+        case 1:
+            stateLabel.text = "等待对方回复"
+            stateLabel.textColor = Constants.yellowWordColor
+        case 2:
+            stateLabel.text = "等待对方回复"
+            stateLabel.textColor = Constants.redWordColor
+        case 3:
+            stateLabel.text = "等待对方回复"
+            stateLabel.textColor = Constants.greenWordColor
+        default:
+            break
+        }
+    }
+    
+    override func layoutSubviews() {
+        
+        dateLabel.snp_makeConstraints { (make) in
+            make.top.equalTo(20)
+            make.left.equalTo(20)
+        }
+        
+        phoneNumLabel.snp_makeConstraints { (make) in
+            make.left.equalTo(dateLabel)
+            make.top.equalTo(dateLabel.snp_bottom).offset(8)
+        }
+        
+        nameLabel.snp_makeConstraints { (make) in
+            make.left.equalTo(dateLabel)
+            make.top.equalTo(phoneNumLabel.snp_bottom).offset(8)
+        }
+        
+        detailLabel.snp_makeConstraints { (make) in
+            make.left.equalTo(nameLabel.snp_right).offset(0)
+            make.top.equalTo(nameLabel)
+        }
+        
+        stateLabel.snp_makeConstraints { (make) in
+            make.centerY.equalTo(self)
+            make.right.equalTo(self).offset(20)
+        }
+    }
+    
+    let dateLabel: UILabel = {
+        let view = UILabel()
+        view.font = Constants.smallFont
+        view.textColor = Constants.paleWordColor
+        return view
+    } ()
+    
+    let phoneNumLabel: UILabel = {
+        let view = UILabel()
+        view.font = Constants.smallFont
+        return view
+    } ()
+    
+    let nameLabel: UILabel = {
+        let view = UILabel()
+        view.font = Constants.smallFont
+        view.textColor = Constants.paleWordColor
+        return view
+    } ()
+    
+    let detailLabel: UILabel = {
+        let view = UILabel()
+        view.font = Constants.smallFont
+        view.textColor = Constants.paleWordColor
+        return view
+    } ()
+    
+    let stateLabel: UILabel = {
+        let view = UILabel()
+        view.font = Constants.smallFont
+        return view
+    } ()
+}

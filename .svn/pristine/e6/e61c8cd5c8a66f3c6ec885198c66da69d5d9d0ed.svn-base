@@ -1,0 +1,512 @@
+//
+//  CPLineSearchResultController.swift
+//  i84cpn
+//
+//  Created by 周杰 on 16/5/10.
+//  Copyright © 2016年 5i84. school rights reserved.
+//  线路查询结果
+
+import UIKit
+
+class CPLineSearchResultController: UIViewController,lineSearchResultDelegate,UIAlertViewDelegate {
+    
+    //地址搜索页传递过来的请求参数
+    var schoolAddress:String?
+    var houseAddress:String?
+    var grade:String?
+    var houseLon:Double?
+    var houseLat:Double?
+    var rang:Int?
+    var departType:Int?     //1出发地，0目的地
+
+    //线路查询结果页得到的线路参数，即将作为线路详情页的请求参数
+    var issueId:Int!
+    var classesId:AnyObject!
+    var lineId:Int!
+    var issueIdBack:Int!
+    var classesIdBack:AnyObject!
+    var lineIdBack:Int!
+    
+    var issueIdArrayRecom=NSArray()
+    var classesIdArrayRecom=NSArray()
+    var lineIdArrayRecom=NSArray()
+    
+    var issueIdArraySchool=NSArray()
+    var classesIdArraySchool=NSArray()
+    var lineIdArraySchool=NSArray()
+    
+    var issueIdArrayRecomBack=NSArray()
+    var classesIdArrayRecomBack=NSArray()
+    var lineIdArrayRecomBack=NSArray()
+    
+    var issueIdArraySchoolBack=NSArray()
+    var classesIdArraySchoolBack=NSArray()
+    var lineIdArraySchoolBack=NSArray()
+
+    var selectedRowRecom:Int!            //线路搜索页推荐线路选中的行数
+    var selectedRowSchool:Int!            //线路搜索页学校线路选中的行数
+    
+    var recommadLineDic=NSMutableDictionary()
+    var schoolLineDic=NSMutableDictionary()
+    var lineInfoDicW=NSMutableDictionary()
+    var lineInfoDicF=NSMutableDictionary()
+    
+    var orgOrderId:Int!
+    
+//    var lineSearchParasArray:[String:AnyObject]=["action":"line_search","schoolAddress":"紫阳中学","houseAddress":"闽古屋","houseLon":"119.327499252607","houseLat":"26.0812552750482","grade":"1","rang":"1","type":"2","departType":"1"]
+    
+    var recommadLineParas:NSMutableDictionary=["action":"line_search","schoolAddress":"紫阳中学","houseAddress":"福马路45","houseLon":"119.327499252607","houseLat":"26.0812552750482","grade":"1","rang":"1","type":"2","departType":"1"]
+    
+    var schoolLineParas:NSMutableDictionary=["action":"line_search","schoolAddress":"紫阳中学","houseAddress":"福马路45","houseLon":"119.327499252607","houseLat":"26.0812552750482","grade":"1","rang":"1","type":"3","departType":"1"]
+    
+    
+    private var recommandLineController=UIViewController()      //推荐线路controller
+    private var schoolLineController=UIViewController()            //全部线路controller
+    
+    private var recommandLineResultView=CPLineSearchResultView()//推荐线路view
+    private var schoolLineResultView=CPLineSearchResultView()      //全部线路view
+    
+    private var lineSearchResultModel=CPLineSearchResultModel() //model层
+    private var lineSearchResultSchoolModel=CPLineSearchResultModel() //model层
+    private var lineResultCell=CPLineResultTableViewCell()
+
+    var skScNavC=SKScNavViewController(show: true)
+    var scNavBar:SKScNavBar!
+    override func viewDidLoad() {
+        
+        super.viewDidLoad()
+        self.view.backgroundColor=COLOR_BACKGROUND_GRAY
+        self.navigationController?.navigationBar.barTintColor=UIColor.whiteColor()
+        self.title="查询结果"
+        recommandLineResultView.lineType=1
+        schoolLineResultView.lineType=2
+        
+        setLineInfoParas()
+
+        //推荐线路
+        recommandLineController.title="推荐线路"
+        recommandLineController.view.addSubview(recommandLineResultView)
+        recommandLineResultView.backgroundColor=COLOR_BACKGROUND_GRAY
+        recommandLineResultView.snp_makeConstraints { (make) in
+            make.top.equalTo(recommandLineController.view).offset(0)
+            make.left.equalTo(recommandLineController.view).offset(0)
+            make.height.equalTo(recommandLineController.view.frame.height)
+            make.right.equalTo(recommandLineController.view).offset(0)
+        }
+        weak var weakSelf = self
+        //前往订制路线页面
+        recommandLineResultView.initWithClosure({ (tag) in
+            let customVC = CPCustomLineController()
+            weakSelf?.navigationController?.pushViewController(customVC, animated: true)
+        })
+        
+        //全部线路
+        schoolLineController.title="全部线路"
+        schoolLineController.view.addSubview(schoolLineResultView)
+        schoolLineResultView.backgroundColor=COLOR_BACKGROUND_GRAY
+        schoolLineResultView.snp_makeConstraints { (make) in
+            make.top.equalTo(schoolLineController.view).offset(0)
+            make.left.equalTo(schoolLineController.view).offset(0)
+            make.height.equalTo(schoolLineController.view.frame.height)
+            make.right.equalTo(schoolLineController.view).offset(0)
+        }
+        //前往订制路线页面
+        schoolLineResultView.initWithClosure({ (tag) in
+            let customVC = CPCustomLineController()
+            weakSelf?.navigationController?.pushViewController(customVC, animated: true)
+        })
+        
+        //滑动导航视图
+        skScNavC = SKScNavViewController(subViewControllers: [recommandLineController,schoolLineController])
+        skScNavC.addParentController(self)
+        
+        //rang==1,单程
+        if(rang==1){
+            recomDataLoad()
+            schoolDataLoad()
+        }
+        //rang=0，双程
+        else if(rang==0){
+            recomDataLoad2()
+            schoolDataLoad2()
+            
+        }
+
+
+        lineResultCell.cellGest.addTarget(self, action: #selector(CPLineSearchResultController.goLineInfoCtl))
+
+
+    }
+    
+    //设置线路详情页的请求参数
+    func setLineInfoParas(){
+        //推荐线路请求参数
+        recommadLineDic.setValue("line_search", forKey: "action")
+        recommadLineDic.setValue(schoolAddress, forKey: "schoolAddress")
+        recommadLineDic.setValue(grade, forKey: "grade")
+        recommadLineDic.setValue("2", forKey: "type")
+        recommadLineDic.setValue(departType, forKey: "departType")
+        recommadLineDic.setValue(rang, forKey: "rang")
+        recommadLineDic.setValue(houseAddress, forKey: "houseAddress")
+        recommadLineDic.setValue(houseLon, forKey: "houseLon")
+        recommadLineDic.setValue(houseLat, forKey: "houseLat")
+        
+        //学校线路请求参数
+        schoolLineDic.setValue("line_search", forKey: "action")
+        schoolLineDic.setValue(schoolAddress, forKey: "schoolAddress")
+        schoolLineDic.setValue(grade, forKey: "grade")
+        schoolLineDic.setValue("3", forKey: "type")
+        schoolLineDic.setValue(departType, forKey: "departType")
+        schoolLineDic.setValue(rang, forKey: "rang")
+        schoolLineDic.setValue(houseAddress, forKey: "houseAddress")
+        schoolLineDic.setValue(houseLon, forKey: "houseLon")
+        schoolLineDic.setValue(houseLat, forKey: "houseLat")
+        
+        if rang==1{
+            //线路详情页请求参数，往
+            lineInfoDicW.setValue("line_detail", forKey: "action")
+            lineInfoDicW.setValue(houseLon, forKey: "houseLon")
+            lineInfoDicW.setValue(houseLat, forKey: "houseLat")
+        }else{
+            //线路详情页请求参数，往
+            lineInfoDicW.setValue("line_detail", forKey: "action")
+            lineInfoDicW.setValue(houseLon, forKey: "houseLon")
+            lineInfoDicW.setValue(houseLat, forKey: "houseLat")
+            
+            //线路详情页请求参数,返
+            lineInfoDicF.setValue("line_detail", forKey: "action")
+            lineInfoDicF.setValue(houseLon, forKey: "houseLon")
+            lineInfoDicF.setValue(houseLat, forKey: "houseLat")
+        }
+    }
+    
+    //单程推荐线路加载
+    func recomDataLoad(){
+        //recommadLineDic
+        //
+        lineSearchResultModel.recommadLineDataLoad(Constants.noauthApiURL, para: recommadLineParas) { (lineNameArray, gradeArray, stationNameArray, priceArray, resultListCount,issueIdArray,classesIdArray,lineIdArray,responseData) in
+            self.recommandLineResultView.num=resultListCount
+            self.recommandLineResultView.lineNameArray=lineNameArray
+            self.recommandLineResultView.gradeArray=gradeArray
+            self.recommandLineResultView.stationNameArray=stationNameArray
+            self.recommandLineResultView.priceArray=priceArray
+            self.recommandLineResultView.singleTrip=self.rang
+            self.recommandLineResultView.lineSearchResultTableView.reloadData()
+            self.recommandLineResultView.delegate=self
+            
+            self.issueIdArrayRecom=issueIdArray
+            self.classesIdArrayRecom=classesIdArray
+            self.lineIdArrayRecom=lineIdArray
+            
+            let isSolicitArray=NSMutableArray()
+            let seatNumArray=NSMutableArray()
+            isSolicitArray.removeAllObjects()
+            seatNumArray.removeAllObjects()
+            if(responseData.objectForKey("success") as! Bool){
+                if(responseData.objectForKey("result")?.count != nil)&&(responseData.objectForKey("result")?.objectForKey("success") as! Bool){
+                    
+                    let result=responseData.objectForKey("result")?.objectForKey("result")?.objectForKey("lineList") as! NSArray
+                    for i in 0..<result.count{
+                        let isSolicit = result[i].objectForKey("isSolicit")!
+                        let seatNum=result[i].objectForKey("seatNum")!
+                        isSolicitArray.addObject(isSolicit)
+                        seatNumArray.addObject(seatNum)
+                    }
+                    
+                }
+            }
+            let newIsSolicitArray=NSArray.init(array: isSolicitArray)
+            let newSeatNumArray=NSArray.init(array: seatNumArray)
+            weak var weakSelf=self
+            weakSelf!.recommandLineResultView.isRecruitAr=newIsSolicitArray
+            weakSelf!.recommandLineResultView.seatNumAr=newSeatNumArray
+        }
+    }
+    
+    
+    
+    //单程学校线路加载
+    func schoolDataLoad(){
+        //schoolLineDic
+        //
+        lineSearchResultSchoolModel.schoolLineDataLoad(Constants.noauthApiURL, para: schoolLineParas) { (lineNameArray, gradeArray, stationNameArray, priceArray, resultListCount,issueIdArray,classesIdArray,lineIdArray,responseData) in
+            self.schoolLineResultView.num=resultListCount
+            self.schoolLineResultView.lineNameArray=lineNameArray
+            self.schoolLineResultView.gradeArray=gradeArray
+            self.schoolLineResultView.stationNameArray=stationNameArray
+            self.schoolLineResultView.priceArray=priceArray
+            self.schoolLineResultView.singleTrip=self.rang
+            self.schoolLineResultView.lineSearchResultTableView.reloadData()
+            self.schoolLineResultView.delegate=self
+            
+            self.issueIdArraySchool=issueIdArray
+            self.classesIdArraySchool=classesIdArray
+            self.lineIdArraySchool=lineIdArray
+            
+            let isSolicitArray=NSMutableArray()
+            let seatNumArray=NSMutableArray()
+            isSolicitArray.removeAllObjects()
+            seatNumArray.removeAllObjects()
+            if(responseData.objectForKey("success") as! Bool){
+                if(responseData.objectForKey("result")?.count != nil)&&(responseData.objectForKey("result")?.objectForKey("success") as! Bool){
+                    
+                    let result=responseData.objectForKey("result")?.objectForKey("result")?.objectForKey("lineList") as! NSArray
+                    for i in 0..<result.count{
+                        let isSolicit = result[i].objectForKey("isSolicit")!
+                        let seatNum=result[i].objectForKey("seatNum")!
+                        isSolicitArray.addObject(isSolicit)
+                        seatNumArray.addObject(seatNum)
+                    }
+                    
+                }
+            }
+            let newIsSolicitArray=NSArray.init(array: isSolicitArray)
+            let newSeatNumArray=NSArray.init(array: seatNumArray)
+            weak var weakSelf=self
+            weakSelf!.schoolLineResultView.isRecruitAr=newIsSolicitArray
+            weakSelf!.schoolLineResultView.seatNumAr=newSeatNumArray
+        }
+    }
+    
+    //双程推荐线路加载
+    func recomDataLoad2(){
+        //recommadLineDic
+        //
+        lineSearchResultModel.recommandLineDataLoad2(Constants.noauthApiURL, para: recommadLineParas, closure: { (lineNameArray, lineNameArrayBack, gradeArray, stationNameArray, priceArray, priceArrayBack, resultListCount, issueIdArray, classesIdArray, lineIdArray, issueIdArrayBack, classesIdArrayBack, lineIdArrayBack,responseData) in
+            self.recommandLineResultView.num=resultListCount
+            self.recommandLineResultView.lineNameArray=lineNameArray
+            self.recommandLineResultView.gradeArray=gradeArray
+            self.recommandLineResultView.stationNameArray=stationNameArray
+            self.recommandLineResultView.lineNameArrayBack=lineNameArrayBack
+            self.recommandLineResultView.priceArrayBack=priceArrayBack
+            self.recommandLineResultView.priceArray=priceArray
+            self.recommandLineResultView.singleTrip=self.rang
+            self.recommandLineResultView.lineSearchResultTableView.reloadData()
+            self.recommandLineResultView.delegate=self
+            
+            self.issueIdArrayRecom=issueIdArray
+            self.classesIdArrayRecom=classesIdArray
+            self.lineIdArrayRecom=lineIdArray
+            
+            self.issueIdArrayRecomBack=issueIdArrayBack
+            self.classesIdArrayRecomBack=classesIdArrayBack
+            self.lineIdArrayRecomBack=lineIdArrayBack
+            
+            let isSolicitArray=NSMutableArray()
+            let seatNumArray=NSMutableArray()
+            isSolicitArray.removeAllObjects()
+            seatNumArray.removeAllObjects()
+            if(responseData.objectForKey("success") as! Bool){
+                if(responseData.objectForKey("result")?.count != nil)&&(responseData.objectForKey("result")?.objectForKey("success") as! Bool){
+                    
+                    let result=responseData.objectForKey("result")?.objectForKey("result")?.objectForKey("lineList") as! NSArray
+                    //                        print(result)
+                    for i in 0..<result.count{
+                        let isSolicit = result[i].objectForKey("w")!.objectForKey("isSolicit")!
+                        let seatNum=result[i].objectForKey("w")!.objectForKey("seatNum")!
+                        isSolicitArray.addObject(isSolicit)
+                        seatNumArray.addObject(seatNum)
+                    }
+                    
+                }
+            }
+            let newIsSolicitArray=NSArray.init(array: isSolicitArray)
+            let newSeatNumArray=NSArray.init(array: seatNumArray)
+            weak var weakSelf=self
+            weakSelf!.recommandLineResultView.isRecruitAr=newIsSolicitArray
+            weakSelf!.recommandLineResultView.seatNumAr=newSeatNumArray
+        })
+    }
+
+    //双程学校线路加载
+    func schoolDataLoad2(){
+        //schoolLineDic
+        //
+        lineSearchResultSchoolModel.schoolLineDataLoad2(Constants.noauthApiURL, para: schoolLineParas, closure: { (lineNameArray, lineNameArrayBack, gradeArray, stationNameArray, priceArray, priceArrayBack, resultListCount, issueIdArray, classesIdArray, lineIdArray, issueIdArrayBack, classesIdArrayBack, lineIdArrayBack,responseData) in
+            self.schoolLineResultView.num=resultListCount
+            self.schoolLineResultView.lineNameArray=lineNameArray
+            self.schoolLineResultView.gradeArray=gradeArray
+            self.schoolLineResultView.stationNameArray=stationNameArray
+            self.schoolLineResultView.priceArray=priceArray
+            self.schoolLineResultView.lineNameArrayBack=lineNameArrayBack
+            self.schoolLineResultView.priceArrayBack=priceArrayBack
+            self.schoolLineResultView.singleTrip=self.rang
+            self.schoolLineResultView.lineSearchResultTableView.reloadData()
+            self.schoolLineResultView.delegate=self
+            
+            self.issueIdArraySchool=issueIdArray
+            self.classesIdArraySchool=classesIdArray
+            self.lineIdArraySchool=lineIdArray
+            
+            self.issueIdArraySchoolBack=issueIdArrayBack
+            self.classesIdArraySchoolBack=classesIdArrayBack
+            self.lineIdArraySchoolBack=lineIdArrayBack
+            
+            let isSolicitArray=NSMutableArray()
+            let seatNumArray=NSMutableArray()
+            isSolicitArray.removeAllObjects()
+            seatNumArray.removeAllObjects()
+            if(responseData.objectForKey("success") as! Bool){
+                if(responseData.objectForKey("result")?.count != nil)&&(responseData.objectForKey("result")?.objectForKey("success") as! Bool){
+                    
+                    let result=responseData.objectForKey("result")?.objectForKey("result")?.objectForKey("lineList") as! NSArray
+                    //                        print(result)
+                    for i in 0..<result.count{
+                        let isSolicit = result[i].objectForKey("w")!.objectForKey("isSolicit")!
+                        let seatNum=result[i].objectForKey("w")!.objectForKey("seatNum")!
+                        isSolicitArray.addObject(isSolicit)
+                        seatNumArray.addObject(seatNum)
+                    }
+                    
+                }
+            }
+            let newIsSolicitArray=NSArray.init(array: isSolicitArray)
+            let newSeatNumArray=NSArray.init(array: seatNumArray)
+            weak var weakSelf=self
+            weakSelf!.schoolLineResultView.isRecruitAr=newIsSolicitArray
+            weakSelf!.schoolLineResultView.seatNumAr=newSeatNumArray
+        })
+    }
+    
+    func goLineInfoCtl(row: Int,lineType:Int) {
+//        print("用户登录状态：",CPUserModel.getLoginState())
+        if !CPUserModel.getLoginState() {
+            let alertView=UIAlertView(title: "提示", message: "请先登录", delegate: self, cancelButtonTitle: "确定")
+            alertView.tag=1
+            alertView.show()
+        }
+        else{
+            
+        //获取点击的行数
+        self.selectedRowRecom=recommandLineResultView.selectedRow
+        self.selectedRowSchool=schoolLineResultView.selectedRow
+        let vc=CPLineInfoController()
+        
+        //判断是单程还是双程
+        if rang==1{
+            if(lineType==1){        //判断是推荐线路还是学校线路
+                
+            issueId=issueIdArrayRecom[selectedRowRecom] as! Int
+            classesId=classesIdArrayRecom[selectedRowRecom] as! String
+            lineId=lineIdArrayRecom[selectedRowRecom] as! Int
+            self.lineInfoDicW.setValue(issueId, forKey: "issueId")
+            self.lineInfoDicW.setValue(classesId, forKey: "classesId")
+            self.lineInfoDicW.setValue(lineId, forKey: "lineId")
+            vc.lineInfoDicW=self.lineInfoDicW
+//            print(vc.lineInfoDicW)
+            
+            //线路详情页所需的订单参数,往
+            vc.lineIdW=self.lineId
+            vc.classIdW=self.classesId
+            vc.issueId=self.issueId
+            }
+            else if(lineType==2){
+            issueId=issueIdArraySchool[selectedRowSchool] as! Int
+            classesId=classesIdArraySchool[selectedRowSchool] as! String
+            lineId=lineIdArraySchool[selectedRowSchool] as! Int
+            self.lineInfoDicW.setValue(issueId, forKey: "issueId")
+            self.lineInfoDicW.setValue(classesId, forKey: "classesId")
+            self.lineInfoDicW.setValue(lineId, forKey: "lineId")
+            vc.lineInfoDicW=self.lineInfoDicW
+//                        print(vc.lineInfoDicW)
+            
+            //线路详情页所需的订单参数,往
+            vc.lineIdW=self.lineId
+            vc.classIdW=self.classesId
+            vc.issueId=self.issueId
+            }
+            
+ 
+        }else{
+            if(lineType==1){
+                issueId=issueIdArrayRecom[selectedRowRecom] as! Int
+                classesId=classesIdArrayRecom[selectedRowRecom] as! AnyObject
+//                print("classesIdArrayRecom=",classesIdArrayRecom)
+//                print("classesId=",classesId)
+                lineId=lineIdArrayRecom[selectedRowRecom] as! Int
+                self.lineInfoDicW.setValue(issueId, forKey: "issueId")
+                self.lineInfoDicW.setValue(classesId, forKey: "classesId")
+                self.lineInfoDicW.setValue(lineId, forKey: "lineId")
+                vc.lineInfoDicW=self.lineInfoDicW
+                
+                //线路详情页所需的订单参数,往
+                vc.lineIdW=self.lineId
+                vc.classIdW=self.classesId
+                vc.issueId=self.issueId
+                
+                issueIdBack=issueIdArrayRecomBack[selectedRowRecom] as! Int
+                classesIdBack=classesIdArrayRecomBack[selectedRowRecom] as! AnyObject
+                lineIdBack=lineIdArrayRecomBack[selectedRowRecom] as! Int
+                self.lineInfoDicF.setValue(issueIdBack, forKey: "issueId")
+                self.lineInfoDicF.setValue(classesIdBack, forKey: "classesId")
+                self.lineInfoDicF.setValue(lineIdBack, forKey: "lineId")
+                vc.lineInfoDicF=self.lineInfoDicF
+                
+                //线路详情页所需的订单参数,返
+                vc.lineIdF=self.lineIdBack
+                vc.classIdF=self.classesIdBack
+            }else if(lineType==2){
+                issueId=issueIdArraySchool[selectedRowSchool] as! Int
+                classesId=classesIdArraySchool[selectedRowSchool] as! AnyObject
+                lineId=lineIdArraySchool[selectedRowSchool] as! Int
+                self.lineInfoDicW.setValue(issueId, forKey: "issueId")
+                self.lineInfoDicW.setValue(classesId, forKey: "classesId")
+                self.lineInfoDicW.setValue(lineId, forKey: "lineId")
+                vc.lineInfoDicW=self.lineInfoDicW
+                
+                //线路详情页所需的订单参数,往
+                vc.lineIdW=self.lineId
+                vc.classIdW=self.classesId
+                vc.issueId=self.issueId
+                
+                issueIdBack=issueIdArraySchoolBack[selectedRowSchool] as! Int
+                classesIdBack=classesIdArraySchoolBack[selectedRowSchool] as! AnyObject
+                lineIdBack=lineIdArraySchoolBack[selectedRowSchool] as! Int
+                self.lineInfoDicF.setValue(issueIdBack, forKey: "issueId")
+                self.lineInfoDicF.setValue(classesIdBack, forKey: "classesId")
+                self.lineInfoDicF.setValue(lineIdBack, forKey: "lineId")
+                vc.lineInfoDicF=self.lineInfoDicF
+                
+                //线路详情页所需的订单参数,返
+                vc.lineIdF=self.lineIdBack
+                vc.classIdF=self.classesIdBack
+            }
+        }
+        vc.rang=self.rang       //单程还是往返
+        vc.orgOrderId=orgOrderId
+        self.hidesBottomBarWhenPushed=true
+        self.navigationController?.pushViewController(vc, animated: true)
+        }
+    }
+    
+    func goCustomLine(){
+        let vc=CPCustomLineController()
+        self.hidesBottomBarWhenPushed=true
+        self.navigationController?.pushViewController(vc, animated: true)
+    }
+    
+    func alertView(alertView: UIAlertView, clickedButtonAtIndex buttonIndex: Int) {
+        if(alertView.tag==1){
+            let vc=CPLoginViewController()
+            self.hidesBottomBarWhenPushed=true
+            self.navigationController?.pushViewController(vc, animated: true)
+        }
+    }
+    
+    override func didReceiveMemoryWarning() {
+        super.didReceiveMemoryWarning()
+        // Dispose of any resources that can be recreated.
+    }
+    
+
+    /*
+    // MARK: - Navigation
+
+    // In a storyboard-based application, you will often want to do a little preparation before navigation
+    override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
+        // Get the new view controller using segue.destinationViewController.
+        // Pass the selected object to the new view controller.
+    }
+    */
+
+}

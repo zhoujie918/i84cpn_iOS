@@ -1,0 +1,35 @@
+//
+//  CPMessageRemindingViewController.swift
+//  i84cpn
+//
+//  Created by BenjaminRichard on 16/6/6.
+//  Copyright © 2016年 5i84. All rights reserved.
+//
+
+import UIKit
+
+class CPMessageRemindingViewController: UIViewController {
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        title = "消息提醒"
+        view.addSubview(messageRemindingView)
+        if hideNavi == true {
+            messageRemindingView.frame = CGRectMake(0, 64, Constants.screenWidth, SCREEN_HEIGHT)
+        }else{ 
+            messageRemindingView.frame = view.frame
+        }
+    }
+    
+    override func viewWillAppear(animated: Bool) {
+        super.viewWillAppear(animated)
+    }
+    
+    override func viewDidAppear(animated: Bool) {
+        super.viewDidAppear(animated)
+    }
+ 
+    var hideNavi = false
+    private var msgTypeArray: NSArray?
+    private let messageRemindingView = CPMessageRemindingView()
+}

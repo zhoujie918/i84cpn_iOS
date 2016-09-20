@@ -1,0 +1,21 @@
+//
+//  AppDelegate.h
+//  clife
+//
+//  Created by BenjaminRichard on 16/5/5.
+//  Copyright © 2016年 5i84. All rights reserved.
+//
+
+#import <UIKit/UIKit.h>
+
+// 极光推送
+static NSString *appKey = @"a16f06a7b6d2ad6dd5e19320";
+static NSString *channel = @"Publish channel";
+static BOOL isProduction = FALSE;
+
+@interface AppDelegate : UIResponder <UIApplicationDelegate> 
+@property (strong, nonatomic) UIWindow *window;
+
+@property (strong, nonatomic)    BMKMapManager *_mapManager;
+
+@end

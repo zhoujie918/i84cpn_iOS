@@ -1,0 +1,188 @@
+//
+//  CPHomePageViewController.swift
+//  i84cpn
+//
+//  Created by 周杰 on 16/5/24.
+//  Copyright © 2016年 5i84. All rights reserved.
+//
+
+import UIKit
+
+
+class CPHomePageController: UIViewController {
+    private var homePageView=CPHomePageView()
+    private var homePageModel=CPHomePageModel()
+    
+    var schoolValue:String!
+    var gradeValue:String!
+    var singleTrip:Int! = 0    //1是单程，0是往返程
+    var switchTag:Int! = 1     //1是出发地，0是目的地
+    var orgOrderId:Int!
+    var comId:Int!
+    
+    var cityIdStr:String=""
+    var newCityId:Int!
+    var newCityIdStr:String!
+    
+    //获取接口数据，学校站点名称和年级
+    let paraSchoolAction=["action":"line_station"]
+    let paraGradeAction=["action":"line_class"]
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        self.title="搜线路"
+        self.automaticallyAdjustsScrollViewInsets=false
+
+        self.navigationController?.navigationBar.barTintColor=COLOR_MAIN
+        self.navigationController?.navigationBar.tintColor = UIColor.blackColor()
+        homePageView.canDrawRect=true
+        
+        if orgOrderId == nil {
+            self.navigationItem.leftBarButtonItem=UIBarButtonItem.item(self, action: #selector(self.onClick), image: "icon_msg", highImage: "icon_msg")
+            self.navigationItem.rightBarButtonItem=UIBarButtonItem.item(self, action: #selector(test), image: "icon_ring", highImage: "icon_ring")
+        }
+        self.navigationController?.navigationBar.translucent=false
+        self.view.addSubview(homePageView)
+        homePageView.snp_makeConstraints { (make) in
+            make.edges.equalTo(self.view).offset(UIEdgeInsetsZero)
+        }
+        
+
+        
+        homePageView.addressGest.addTarget(self, action: #selector(CPHomePageController.goAddress))
+        homePageView.initWithClosure({ (tag) in
+//            let alert = UIAlertView.init(title: "提示", message: "努力开发中...", delegate: nil, cancelButtonTitle: "取消")
+//            alert.show()
+            let realTimeVC = CPRealTimeCarController()
+            self.hidesBottomBarWhenPushed=true
+            self.navigationController?.pushViewController(realTimeVC, animated: true)
+            self.hidesBottomBarWhenPushed = false
+        })
+        self.homePageView.orgOrderId=orgOrderId
+        let tap=UITapGestureRecognizer(target: self, action: #selector(CPHomePageController.goToCustomLine))
+        homePageView.schoolDropDown.footView.addGestureRecognizer(tap)
+    }
+    
+    func goToCustomLine(){
+        let vc=CPCustomLineController()
+        self.hidesBottomBarWhenPushed=true
+        self.navigationController?.pushViewController(vc, animated: true)
+        self.hidesBottomBarWhenPushed=false
+    }
+    
+    //获取学校站点
+    func getSchoolData(){
+        weak var weakSelf=self
+        homePageModel.dropSchoolLoadData(Constants.noauthApiURL, para: ["action":"line_station", "cityId":cityIdStr]) { (success) in
+            self.homePageView.schoolDropDown.defaultValue=""
+            weakSelf?.homePageView.schoolData=success
+        }
+    }
+    //获取年级
+    func getGradeData(){
+        weak var weakSelf=self
+        homePageModel.dropGradeLoadData(Constants.noauthApiURL, para: paraGradeAction) { (success) in
+            self.homePageView.gradeDropDown.defaultValue=""
+            weakSelf?.homePageView.gradeData=success
+        }
+    }
+    
+    func goAddress(){
+        
+        
+        schoolValue=homePageView.schoolValue
+        gradeValue=homePageView.gradeValue
+        singleTrip=homePageView.singleTrip
+        switchTag=homePageView.switchButton.switcherTag
+        
+        if schoolValue==nil {
+            let alertView=UIAlertView(title: "提示", message: "请选择学校", delegate: self, cancelButtonTitle: "确定")
+            alertView.show()
+            return
+        }
+        else if gradeValue==nil {
+            let alertView=UIAlertView(title: "提示", message: "请选择年级", delegate: self, cancelButtonTitle: "确定")
+            alertView.show()
+            return
+        }
+        
+        let addressCtl=CPAddressSearchController()
+        addressCtl.schoolValue=schoolValue
+        addressCtl.gradeValue=gradeValue
+        addressCtl.singleTrip=singleTrip
+        addressCtl.switchTag=switchTag
+        addressCtl.orgOrderId=orgOrderId
+        addressCtl.comId=comId
+        self.navigationController?.pushViewController(addressCtl, animated: true)
+        
+    }
+    
+    func onClick(){
+        let vc = CPMessageRemindingViewController()
+        
+        self.navigationController?.pushViewController(vc, animated: true)
+        self.hidesBottomBarWhenPushed=false
+    }
+    
+    func test() {
+        let alertView = UIAlertView(title: "提示", message: "暂待开发", delegate: self, cancelButtonTitle: "确定")
+        alertView.show()
+    }
+    
+    override func viewWillAppear(animated: Bool) {
+        super.viewWillAppear(animated)
+        IQKeyboardManager.sharedManager().enable=false
+        NSNotificationCenter.defaultCenter().addObserver(self, selector:#selector(CPHomePageController.showRealtimeCarView),
+                                                         name: "ShowRealtimeCar", object: nil)
+        NSNotificationCenter.defaultCenter().addObserver(self, selector:#selector(CPHomePageController.hideRealtimeCarView),
+                                                         name: "HideRealtimeCar", object: nil)
+        CPUserModel.isLogin == true ? CPUserModel.hasPaidOrder() : CPUserModel.userLogin()
+        newCityId = NSUserDefaults.standardUserDefaults().valueForKey("cityId") as! Int
+        newCityIdStr=String(newCityId)
+        if (cityIdStr != newCityIdStr){
+            cityIdStr=newCityIdStr
+            getSchoolData()           //获取学校和年级数据
+            getGradeData()
+        }
+
+    }
+    
+    func showRealtimeCarView() {
+        homePageView.showRealTimeCar()
+    }
+    
+    func hideRealtimeCarView() {
+        homePageView.hideRealTimeCar()
+    }
+    
+    override func viewWillDisappear(animated: Bool) {
+        super.viewWillDisappear(animated)
+        IQKeyboardManager.sharedManager().enable=true
+    }
+    
+    override func viewDidDisappear(animated: Bool) {
+        NSNotificationCenter.defaultCenter().removeObserver(self)
+    }
+    
+    override func viewDidAppear(animated: Bool) {
+        super.viewDidAppear(animated)
+    }
+  
+
+    override func didReceiveMemoryWarning() {
+        super.didReceiveMemoryWarning()
+        // Dispose of any resources that can be recreated.
+    }
+    
+
+    /*
+    // MARK: - Navigation
+
+    // In a storyboard-based application, you will often want to do a little preparation before navigation
+    override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
+        // Get the new view controller using segue.destinationViewController.
+        // Pass the selected object to the new view controller.
+    }
+    */
+
+}

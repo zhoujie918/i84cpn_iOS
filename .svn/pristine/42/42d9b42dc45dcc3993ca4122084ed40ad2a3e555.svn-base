@@ -1,0 +1,53 @@
+//
+//  CPRideInfoSettingViewController.swift
+//  i84cpn
+//
+//  Created by BenjaminRichard on 16/5/18.
+//  Copyright © 2016年 5i84. All rights reserved.
+//
+
+import UIKit
+
+class CPRideInfoSettingViewController: UIViewController {
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        title = "乘车信息设置"
+        view.addSubview(rideInfoSettingView)
+    }
+    
+    override func viewWillAppear(animated: Bool) {
+        super.viewWillAppear(animated)
+        rideInfoSettingView.frame = view.frame
+    }
+    
+    override func viewDidAppear(animated: Bool) {
+        super.viewDidAppear(animated)
+        
+        rideInfoSettingView.receiveRideInfoMessageSwitch.addTarget(self, action: #selector(rideInfoPush), forControlEvents: .ValueChanged)
+        rideInfoSettingView.SMSPushSwitch.addTarget(self, action: #selector(rideInfoPush), forControlEvents: .ValueChanged)
+    }
+    
+    func rideInfoPush(swh: UISwitch) {
+        let isRecRmsg = rideInfoSettingView.receiveRideInfoMessageSwitch.on ? 1: 0
+        let isRecSmsg = rideInfoSettingView.SMSPushSwitch.on ? 1 : 0
+        
+        CPAFHTTPSessionManager.postWithUrlString(Constants.userInfoURL, parameter: Constants.setRidePush(isRecRmsg, isRecSmsg: isRecSmsg), progressBlock: { (progress) in
+            
+            }, successBlock: { (respondData) in
+                var objData = respondData as! NSDictionary
+                if objData.objectForKey("success") as! Bool {
+                    objData = objData.objectForKey("result") as! NSDictionary
+                    if objData.objectForKey("success") as! Bool {
+                        Constants.dPrint("成功")
+                    } else {
+                        Constants.dPrint(objData)
+                    }
+                }
+            }) { (error) in
+                Constants.dPrint(error)
+        }
+    }
+    
+    private let rideInfoSettingView = CPRideInfoSettingView()
+}

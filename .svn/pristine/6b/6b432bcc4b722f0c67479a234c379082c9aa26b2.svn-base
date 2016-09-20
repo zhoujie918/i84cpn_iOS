@@ -1,0 +1,63 @@
+//
+//  CPPetNameView.swift
+//  i84cpn
+//
+//  Created by BenjaminRichard on 16/5/12.
+//  Copyright © 2016年 5i84. All rights reserved.
+//
+
+import UIKit
+
+class CPPetNameView: CMBaseView {
+
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        self.backgroundColor = Constants.paleBGColor
+        
+        containView.addSubview(petTextField)
+        self.addSubview(containView)
+        self.addSubview(tipLabel)
+    }
+    
+    required init?(coder aDecoder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    override func layoutSubviews() {
+        containView.snp_makeConstraints { (make) in
+            make.left.right.equalTo(0)
+            make.top.equalTo(20)
+            make.bottom.equalTo(petTextField.snp_bottom).offset(20)
+        }
+        
+        petTextField.snp_makeConstraints { (make) in
+            make.top.right.left.equalTo(containView).offset(20)
+        }
+        
+        tipLabel.snp_makeConstraints { (make) in
+            make.top.equalTo(containView.snp_bottom).offset(20)
+            make.left.right.equalTo(0)
+        }
+    }
+
+    private let containView: UIView = {
+        let view = UIView()
+        view.backgroundColor = Constants.whiteBGColor
+        return view
+    } ()
+    
+    let petTextField: UITextField = {
+        let view = UITextField()
+        view.placeholder = "请在此输入您的昵称"
+        return view
+    } ()
+    
+    let tipLabel: UILabel = {
+        let view = UILabel()
+        view.font = UIFont.systemFontOfSize(13)
+        view.textAlignment = NSTextAlignment.Center
+        view.textColor = Constants.paleWordColor
+        view.text = "昵称由中文、英文、数字组成，请勿输入标点及特殊符号"
+        return view
+    } ()
+}

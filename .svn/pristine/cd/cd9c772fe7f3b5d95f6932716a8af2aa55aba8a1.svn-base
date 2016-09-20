@@ -1,0 +1,692 @@
+//
+//  CPLineInfoController.swift
+//  i84cpn
+//
+//  Created by 周杰 on 16/5/17.
+//  Copyright © 2016年 5i84. All rights reserved.
+//  线路详情
+
+import UIKit
+
+class CPLineInfoController: UIViewController,goCtlDelegate,UIAlertViewDelegate {
+    var lineInfoView=CPLineInfoView()
+    var lineInfoModel=CPLineInfoModel()
+    var lineInfoModel2=CPLineInfoModel()
+    
+    let lineDetailAction=["action":"line_detail"]
+    let passgerAction=["action":"get_psg_list"]
+    let passgerAddress=["action":"get_bu_add_list"]
+
+    var rang:Int!
+    var lineInfoDicW=NSMutableDictionary()
+    var lineInfoDicF=NSMutableDictionary()
+    
+    //订单参数
+    var orderDic=NSMutableDictionary()  //设置订单所需的参数
+    var paramDic=NSMutableDictionary()
+    var lineArrayS=NSMutableArray()     //lineList列表
+    var lineDicF=NSMutableDictionary()
+    var lineDicW=NSMutableDictionary()
+    var psgIdsArray=NSMutableArray()    //psgIds列表
+    var psgIdsDic=NSMutableDictionary()
+    var psgResultList=NSArray()
+    
+    var isRemadeCard:Int!   //是否办新卡
+    var psgId:Int!          //乘客ID
+    
+    var lineIdW:Int!         //线路ID
+    var classIdW:AnyObject!  //班次ID
+    var getOnStationW:AnyObject!   //上车站点ID
+    var getOffStationW:AnyObject!  //下车站点ID
+    
+    var lineIdF:Int!
+    var classIdF:AnyObject!
+    var getOnStationF:AnyObject!    //选中的上车站点Id W
+    var getOffStationF:AnyObject!         //选中的下车站点Id F
+    
+//    var uasId:Int!          //通讯地址ID
+    var receipt:String!     //发票抬头
+    var isNeedContract:Int! //是否需要合同，1需要，0不需要
+    var startDate:AnyObject!   //开始乘车时间
+    var issueId:AnyObject!         //期次
+    var psgIds:Int!         //乘客列表
+    var orderId:Int!        //获取到的订单Id
+    
+    var stationListAr=NSArray()
+    var stationList : [StationList]!
+    var lineInfoObj=NSDictionary()
+    
+    var stationListArBack=NSArray()
+    var lineInfoObjBack=NSDictionary()
+    
+    var psgBtnTag:Int!
+    
+    var setAddName=NSMutableDictionary()                //设置满座报名所需的参数
+    var setChangeOrderDic=NSMutableDictionary()       //设置获取订单详情所需的参数
+    var orgOrderId:Int!
+    var isSolicit:String!
+    var fullSeat:Bool!
+    
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        let bundle=NSBundle.mainBundle().loadNibNamed("calendarView", owner: nil, options: nil)[0] as! UIView
+        lineInfoView=bundle as! CPLineInfoView
+        lineInfoView.canDrawRect = true
+        self.view.addSubview(bundle)
+        bundle.snp_makeConstraints { (make) in
+            make.edges.equalTo(self.view).offset(UIEdgeInsetsZero)
+        }
+        self.title="线路详情"
+        self.view.backgroundColor=COLOR_BACKGROUND_GRAY
+        self.navigationController?.navigationBar.translucent=false
+        
+//        print("线路详情页的请求参数，往",lineInfoDicW)
+//        print("线路详情页的请求参数，返",lineInfoDicF)
+        lineInfoView.delegate=self
+        
+        //判断当无orgOrderId时，跳转到线路详情页。当orgOrerId有值时，跳转到改签页
+        if (orgOrderId==nil){
+            if (rang==1){
+                //线路详情数据加载
+                lineInfoLoad()
+                isSolicit=lineInfoDicW.objectForKey("isSolicit") as! String
+                if isSolicit==String(2) {
+                    self.lineInfoView.isShowRecruit=true
+                }
+                
+            }else{
+                //往程线路加载
+                lineInfoLoad1()
+                
+                //返程线路加载
+                lineInfoLoad2()
+            }
+        }
+        else{
+            self.title="改签"
+            self.lineInfoView.isShowChangeOrder=true
+            setChangeOrderDic.setValue("order_detail", forKey: "action")
+            setChangeOrderDic.setValue(orgOrderId, forKey: "orderId")
+            getOrderInfo()      //获取需要改签的线路详情，获取乘客
+            lineInfoLoad()      //获取新的线路详情
+        }
+
+    }
+
+    
+    //添加乘客
+    func addPsgId(){
+        psgBtnTag=1
+        let vc = CPAddPassengerViewController()
+        self.navigationController?.pushViewController(vc, animated: true)
+    }
+    //添加通讯地址
+    func addPassgerAddress(){
+        psgBtnTag=2
+        let vc = CPAddAddressViewController()
+        self.navigationController?.pushViewController(vc, animated: true)
+
+    }
+    
+    //提交订单
+    func commitOrder(){
+        orderDic.removeAllObjects()
+        receipt="个人"
+        isRemadeCard=1
+        //----------------------------------------------
+        self.startDate=self.lineInfoView.startDate
+        //乘客数组
+        psgIdsArray.removeAllObjects()
+        for i in 0..<self.lineInfoView.psgIdsSelectedAr.count{
+            psgIdsDic.removeAllObjects()
+            let psgBool=self.lineInfoView.psgIdsSelectedAr[i] as! Int
+            if(psgBool==1){
+                psgIdsDic.setValue(psgResultList[i].objectForKey("psgId"), forKey: "psgId")
+                psgIdsDic.setValue(0, forKey: "isRemadeCard")
+                let dic = NSDictionary.init(dictionary: psgIdsDic)
+                psgIdsArray.addObject(dic)
+            }
+            
+        }
+        //获取通讯地址Id
+        var uasId=self.lineInfoView.getUasId()
+
+        if (self.lineInfoView.dropRowW == nil){
+            let alertView = UIAlertView(title: "提示", message: "请选择上车站点", delegate: self, cancelButtonTitle: "确定")
+            alertView.show()
+        }else if(rang==0)&&(self.lineInfoView.dropRowF == nil){
+            let alertView = UIAlertView(title: "提示", message: "请选择下车站点", delegate: self, cancelButtonTitle: "确定")
+            alertView.show()
+        }else if startDate==nil {
+            let alertView = UIAlertView(title: "提示", message: "请选择乘车日期", delegate: self, cancelButtonTitle: "确定")
+            alertView.show()
+        }else if psgIdsArray.count==0 {
+            let alertView = UIAlertView(title: "提示", message: "乘客列表不能为空", delegate: self, cancelButtonTitle: "确定")
+            alertView.show()
+        }else if uasId == -1 {
+            let alertView = UIAlertView(title: "提示", message: "通讯地址不能为空", delegate: self, cancelButtonTitle: "确定")
+            alertView.show()
+        }else if self.lineInfoView.dropRowAddress==nil {
+            self.lineInfoView.dropRowAddress=0
+        }
+        
+        else{
+            isNeedContract=self.lineInfoView.isNeedContract
+            if(rang==1){
+                self.lineInfoView.timeValue.text=(stationListAr[self.lineInfoView.dropRowW].objectForKey("departTime") as! String)
+                self.lineInfoView.orderTermValue.text=(lineInfoObj.objectForKey("issueName") as! String)
+                self.getOnStationW=(stationListAr[self.lineInfoView.dropRowW].objectForKey("stationId")!)
+                self.getOffStationW=stationListAr[stationListAr.count-1].objectForKey("stationId")
+                
+                lineDicW.setValue(lineIdW, forKey: "lineId")
+                lineDicW.setValue(classIdW, forKey: "classId")
+                lineDicW.setValue(getOnStationW, forKey: "getOnStation")
+                lineDicW.setValue(getOffStationW, forKey: "getOffStation")
+                
+                lineArrayS.addObject(lineDicW)
+                
+            }else{
+                if self.lineInfoView.dropRowW==nil{
+                    let alertView = UIAlertView(title: "提示", message: "请选择上车站点", delegate: self, cancelButtonTitle: "确定")
+                    alertView.show()
+                }
+                if self.lineInfoView.dropRowF==nil {
+                    let alertView = UIAlertView(title: "提示", message: "请选择下车站点", delegate: self, cancelButtonTitle: "确定")
+                    alertView.show()
+                }
+                self.lineInfoView.timeValue.text=(stationListAr[self.lineInfoView.dropRowW].objectForKey("departTime") as! String)
+                self.lineInfoView.orderTermValue.text=(lineInfoObj.objectForKey("issueName") as! String)
+                self.getOnStationW=(stationListAr[self.lineInfoView.dropRowW].objectForKey("stationId")!)
+                self.getOffStationW=stationListAr[stationListAr.count-1].objectForKey("stationId")
+                
+                lineDicW.setValue(lineIdW, forKey: "lineId")
+                lineDicW.setValue(classIdW, forKey: "classId")
+                lineDicW.setValue(getOnStationW, forKey: "getOnStation")
+                lineDicW.setValue(getOffStationW, forKey: "getOffStation")
+                
+                self.lineInfoView.timeBackValue.text=(stationListArBack[self.lineInfoView.dropRowF].objectForKey("departTime") as! String)
+                //上下车站点
+                self.getOnStationF=stationListArBack[0].objectForKey("stationId")
+                self.getOffStationF=stationListArBack[self.lineInfoView.dropRowF].objectForKey("stationId")
+                
+                lineDicF.setValue(lineIdF, forKey: "lineId")
+                lineDicF.setValue(classIdF, forKey: "classId")
+                lineDicF.setValue(getOnStationF, forKey: "getOnStation")
+                lineDicF.setValue(getOffStationF, forKey: "getOffStation")
+                lineArrayS.addObject(lineDicW)
+                lineArrayS.addObject(lineDicF)
+            }
+            
+//            psgIdsDic.setValue(isRemadeCard, forKey: "isRemadeCard")
+//            psgIdsDic.setValue(psgId, forKey: "psgId")
+//            psgIdsArray.addObject(psgIdsDic)
+            
+            paramDic.setValue(lineArrayS, forKey: "lineList")
+            paramDic.setValue(psgIdsArray, forKey: "psgIds")
+            
+            paramDic.setValue(issueId, forKey: "issueId")
+            paramDic.setValue(startDate, forKey: "startDate")
+            paramDic.setValue(isNeedContract, forKey: "isNeedContract")
+            paramDic.setValue(receipt, forKey: "receipt")
+            paramDic.setValue(uasId, forKey: "uasId")
+
+            orderDic.setValue("order_add", forKey: "action")
+            
+            
+            do {
+                let json=try NSJSONSerialization.dataWithJSONObject(paramDic, options: NSJSONWritingOptions.PrettyPrinted)
+                let str=NSString(data: json, encoding: NSUTF8StringEncoding)
+                var filtered = str!.stringByReplacingOccurrencesOfString("\n", withString: "", options: NSStringCompareOptions.LiteralSearch, range: NSMakeRange(0, str!.length))
+                orderDic.setValue(str, forKey: "param")
+                
+            } catch {
+            }
+                        
+            lineInfoModel.getOrderId(Constants.userInfoURL, para: orderDic) { (orderId) in
+                
+                self.orderId=orderId
+                print(self.orderDic)
+                //            print("新增的订单编号是:",self.orderId)
+                let vc=CPUnPaidDetailViewController()
+                vc.orderId=orderId
+                self.navigationController?.pushViewController(vc, animated: true)
+                
+            }
+        }
+    }
+
+
+    override func didReceiveMemoryWarning() {
+        super.didReceiveMemoryWarning()
+        // Dispose of any resources that can be recreated.
+    }
+    override func viewWillAppear(animated: Bool) {
+        if psgBtnTag == nil {
+            self.lineInfoView.psgRefresh()
+            self.getPsgList()
+            self.getPsgAddress()
+        }else if(psgBtnTag==1){
+            self.lineInfoView.psgRefresh()
+            self.getPsgList()
+        }else if psgBtnTag==2 {
+            self.getPsgAddress()
+
+        }
+
+    }
+    //获取需要改签的线路详情
+    func getOrderInfo(){
+        weak var weakSelf=self
+        lineInfoModel.getOrderInfo(Constants.userInfoURL, para: setChangeOrderDic) { (orderInfo) in
+            weakSelf!.lineInfoView.orderViewData=orderInfo
+        }
+        
+    }
+    
+    func lineInfoLoad(){
+        weak var weakSelf=self
+        lineInfoModel.lineInfoDataLoad(Constants.userInfoURL, para: lineInfoDicW) { (dateListAr, stationListAr, passengerListAr, lineInfoObj, model) in
+            let stationAr=NSMutableString()
+            let stationOptions=NSMutableArray()
+            let dateArray=NSMutableArray()
+            let lineInfoGradeNum=(lineInfoObj.objectForKey("grade") as! String)
+            self.stationList = model.stationList
+            
+            self.lineInfoView.lineNameLb.text=(lineInfoObj.objectForKey("lineName") as! String)
+            self.lineInfoView.priceLb.text=String(lineInfoObj.objectForKey("price")!)
+            self.lineInfoView.gradeLb.text="推荐"+self.getGradeString(lineInfoGradeNum)+"乘坐"
+            for i in 0..<stationListAr.count{
+                
+                var stationValue=(stationListAr as! NSArray)[i].objectForKey("stationName") as! String
+                stationAr.appendString(stationValue+"、")
+                stationOptions.addObject(stationValue)
+            }
+            
+            
+            stationAr.deleteCharactersInRange(NSMakeRange(stationAr.length-1, 1))
+            self.lineInfoView.stationValue.text=stationAr as String
+            self.lineInfoView.startStationDropMenu.defaultValue=""
+            self.lineInfoView.startStationDropMenu.options=stationOptions
+            weakSelf!.lineInfoView.stationListAr=stationListAr
+            weakSelf!.lineInfoView.lineInfoObj=lineInfoObj
+            
+            self.lineInfoView.timeValue.text=(stationListAr[0].objectForKey("departTime") as! String)
+            self.lineInfoView.orderTermValue.text=(lineInfoObj.objectForKey("issueName") as! String)
+            self.stationListAr=stationListAr
+            self.lineInfoObj=lineInfoObj
+
+            let openWayNum=(lineInfoObj.objectForKey("openWay")! as! NSString).intValue
+            var openWayValue:String!
+            if openWayNum==0 {
+                openWayValue="工作日"
+            }else{
+                openWayValue="自定义"
+            }
+            self.lineInfoView.moveWayValue.text=openWayValue
+            
+            for j in 0..<dateListAr.count {
+                var date=dateListAr[j].objectForKey("operDate")
+                dateArray.addObject(date!)
+                
+                var formatter=NSDateFormatter()
+                formatter.dateFormat="yyyy-MM-dd"
+                var newDate=formatter.dateFromString(date as! NSString as String)!
+                self.lineInfoView.newDateArray.addObject(newDate)
+            }
+            NSNotificationCenter.defaultCenter().postNotificationName("date", object: self.lineInfoView.newDateArray)
+            
+            self.lineInfoView.lineBackView.removeFromSuperview()
+            self.lineInfoView.orderView.snp_updateConstraints(closure: { (make) in
+                make.top.equalTo(self.lineInfoView.lineView.snp_bottom).offset(HEIGHT_DYNAMIC(10))
+            })
+            self.lineInfoView.startStationBackDropMenu.hidden=true
+            self.lineInfoView.wLabel.removeFromSuperview()
+            self.lineInfoView.lineNameLb.snp_updateConstraints(closure: { (make) in
+                make.left.equalTo(self.lineInfoView.lineView).offset(WIDTH_DYNAMIC(15))
+            })
+            
+            self.lineInfoView.recruitLineName.text=(lineInfoObj.objectForKey("lineName") as! String)
+            self.lineInfoView.orderTermValueFull.text=(lineInfoObj.objectForKey("issueName") as! String)
+            self.lineInfoView.openWayValue.text=openWayValue
+        }
+    }
+    
+    func lineInfoLoad1(){
+        weak var weakSelf=self
+        //往线路
+        lineInfoModel.lineInfoDataLoad(Constants.userInfoURL, para: lineInfoDicW) { (dateListAr, stationListAr, passengerListAr, lineInfoObj, model) in
+            //                print(dateListAr, stationListAr, passengerListAr, lineInfoObj)
+            //                print("self.lineInfoDicW:",self.lineInfoDicW)
+            let stationAr=NSMutableString()
+            let stationOptions=NSMutableArray()
+            let dateArray=NSMutableArray()
+            let lineInfoGradeNum=(lineInfoObj.objectForKey("grade") as! String)
+            self.stationListAr=stationListAr
+            self.lineInfoObj=lineInfoObj
+            self.stationList = model.stationList
+            
+            self.lineInfoView.lineNameLb.text=(lineInfoObj.objectForKey("lineName") as! String)
+            self.lineInfoView.priceLb.text=String(lineInfoObj.objectForKey("price")!)
+            self.lineInfoView.gradeLb.text="推荐"+self.getGradeString(lineInfoGradeNum)+"乘坐"
+            for i in 0..<stationListAr.count{
+                
+                var stationValue=(stationListAr as! NSArray)[i].objectForKey("stationName") as! String
+                stationAr.appendString(stationValue+"、")
+                stationOptions.addObject(stationValue)
+            }
+            
+            stationAr.deleteCharactersInRange(NSMakeRange(stationAr.length-1, 1))
+            weakSelf!.lineInfoView.stationListAr=stationListAr
+            self.lineInfoView.stationValue.text=stationAr as String
+            self.lineInfoView.startStationDropMenu.defaultValue=""
+            self.lineInfoView.startStationDropMenu.options=stationOptions
+            self.lineInfoView.timeValue.text=(stationListAr[0].objectForKey("departTime") as! String)
+            self.lineInfoView.orderTermValue.text=(lineInfoObj.objectForKey("issueName") as! String)
+            let openWayNum=(lineInfoObj.objectForKey("openWay")! as! NSString).intValue
+            var openWayValue:String!
+            if openWayNum==0 {
+                openWayValue="工作日"
+            }else{
+                openWayValue="自定义"
+            }
+            self.lineInfoView.moveWayValue.text=openWayValue
+            
+            for j in 0..<dateListAr.count {
+                let date=dateListAr[j].objectForKey("operDate")
+                dateArray.addObject(date!)
+                
+                let formatter=NSDateFormatter()
+                formatter.dateFormat="yyyy-MM-dd"
+                let newDate=formatter.dateFromString(date as! NSString as String)!
+                self.lineInfoView.newDateArray.addObject(newDate)
+                
+            }
+            NSNotificationCenter.defaultCenter().postNotificationName("date", object: self.lineInfoView.newDateArray)
+        }
+    }
+    
+    func lineInfoLoad2(){
+        weak var weakSelf=self
+        //返线路
+        lineInfoModel2.lineInfoDataLoad(Constants.userInfoURL, para: lineInfoDicF) { (dateListAr, stationListAr, passengerListAr, lineInfoObj, model) in
+            let stationAr=NSMutableString()
+            let stationOptions=NSMutableArray()
+            let dateArray=NSMutableArray()
+            let lineInfoGradeNum=(lineInfoObj.objectForKey("grade") as! String)
+            self.stationListArBack=stationListAr
+            self.lineInfoObjBack=lineInfoObj
+            self.stationList = model.stationList
+            
+            self.lineInfoView.lineBackNameKey.text=(lineInfoObj.objectForKey("lineName") as! String)
+            self.lineInfoView.priceBackValue.text=String(lineInfoObj.objectForKey("price")!)
+            self.lineInfoView.gradeBackValue.text="推荐"+self.getGradeString(lineInfoGradeNum)+"乘坐"
+            for i in 0..<stationListAr.count{
+                
+                var stationValue=(stationListAr as! NSArray)[i].objectForKey("stationName") as! String
+                stationAr.appendString(stationValue+"、")
+                stationOptions.addObject(stationValue)
+            }
+            
+            stationAr.deleteCharactersInRange(NSMakeRange(stationAr.length-1, 1))
+            weakSelf!.lineInfoView.stationListArBack=stationListAr
+            self.lineInfoView.stationBackValue.text=stationAr as String
+            //                self.lineInfoView.startStationBackDropMenu.defaultValue=stationOptions[0] as! String
+            self.lineInfoView.startStationBackDropMenu.defaultValue=""
+            self.lineInfoView.startStationBackDropMenu.options=stationOptions
+            self.lineInfoView.timeBackValue.text=(self.stationListArBack[0].objectForKey("departTime") as! String)
+            //上下车站点
+            self.getOnStationF=self.stationListArBack[0].objectForKey("stationId")
+            
+        }
+        
+    }
+    
+    func goLineDetailMap(){
+        let vc=CPRealTimeCarController()
+        vc.stationList = stationList
+        vc.isLineInfo=true
+        self.navigationController?.pushViewController(vc, animated: true)
+    }
+    
+    func goNextCtl(tag: Int) {
+        if tag==1 {
+            //招募中
+            let alert=UIAlertView(title: "提示", message: "参加成功，请等待客服联系！", delegate: self, cancelButtonTitle: "好的")
+            alert.show()
+        }
+        else if tag==2 {
+            //满座
+            addName()
+            let alert=UIAlertView(title: "提示", message: "报名成功，请等待客服联系！", delegate: self, cancelButtonTitle: "好的")
+            alert.show()
+        }
+        else if tag==3 {
+            //提交订单
+            commitOrder()
+        }
+        else if tag==4 {
+            //点击改签
+            if (self.lineInfoView.dropRowW == nil){
+                let alertView = UIAlertView(title: "提示", message: "请选择上车站点", delegate: self, cancelButtonTitle: "确定")
+                alertView.show()
+            }else if self.lineInfoView.startDate==nil {
+                let alertView = UIAlertView(title: "提示", message: "请选择乘车日期", delegate: self, cancelButtonTitle: "确定")
+                alertView.show()
+            }
+            else {
+                self.lineInfoView.changeOrderView.hidden=false
+                self.lineInfoView.changeOrderInfoView.hidden=false
+                changeOrderCommit()
+                
+            }
+        }
+        else if tag==5 {
+            //确定改签
+            comfirmChangeOrder()
+        }
+        else if tag==6 {
+            //取消改签
+            self.lineInfoView.changeOrderView.hidden=true
+            self.lineInfoView.changeOrderInfoView.hidden=true
+        }
+        else if tag==10 {
+            //新增乘客地址
+            addPassgerAddress()
+        }
+        else {
+            let alert=UIAlertView(title: "提示", message: "未知的事件！", delegate: self, cancelButtonTitle: "好的")
+            alert.show()
+        }
+    }
+    
+    //满座，报名
+    func addName(){
+        setAddName.setValue("sign_up_for_line", forKey: "action")
+        setAddName.setValue(lineIdW, forKey: "lineId")
+        setAddName.setValue(issueId, forKey: "issueId")
+        setAddName.setValue(classIdW, forKey: "classesId")
+//        print(setAddName)
+    }
+    
+    //改签订单提示
+    func changeOrderCommit(){
+        self.getOnStationW=self.lineInfoView.getOnStationW
+        self.getOffStationW=self.lineInfoView.getOffStationW
+        self.startDate=self.lineInfoView.startDate
+        
+        setChangeOrderDic.removeAllObjects()
+        setChangeOrderDic.setValue("order_endorseInfo", forKey: "action")
+        setChangeOrderDic.setValue(orgOrderId, forKey: "orgOrderId")
+        setChangeOrderDic.setValue(lineIdW, forKey: "lineId")
+        setChangeOrderDic.setValue(issueId, forKey: "issueId")
+        setChangeOrderDic.setValue(classIdW, forKey: "classId")
+        setChangeOrderDic.setValue(getOnStationW, forKey: "getOnStation")
+        setChangeOrderDic.setValue(getOffStationW, forKey: "getOffStation")
+        setChangeOrderDic.setValue(startDate, forKey: "startDate")
+        
+        weak var weakSelf=self
+        lineInfoModel.getChangeOrderInfo(Constants.userInfoURL, para: setChangeOrderDic) { (orderInfo) in
+            weakSelf!.lineInfoView.changeOrderViewData=orderInfo
+        }
+    }
+    
+    //确认改签
+    func comfirmChangeOrder(){
+        self.getOnStationW=self.lineInfoView.getOnStationW
+        self.getOffStationW=self.lineInfoView.getOffStationW
+        self.startDate=self.lineInfoView.startDate
+        
+        setChangeOrderDic.removeAllObjects()
+        setChangeOrderDic.setValue("order_endorseOrder", forKey: "action")
+        setChangeOrderDic.setValue(orgOrderId, forKey: "orgOrderId")
+        setChangeOrderDic.setValue(lineIdW, forKey: "lineId")
+        setChangeOrderDic.setValue(issueId, forKey: "issueId")
+        setChangeOrderDic.setValue(classIdW, forKey: "classId")
+        setChangeOrderDic.setValue(getOnStationW, forKey: "getOnStation")
+        setChangeOrderDic.setValue(getOffStationW, forKey: "getOffStation")
+        setChangeOrderDic.setValue(startDate, forKey: "startDate")
+
+        lineInfoModel2.getOrderId(Constants.userInfoURL, para: setChangeOrderDic) { (orderId) in
+            self.orderId=orderId
+        }
+        if(self.lineInfoView.cj<String(0)){
+            self.pay()
+        }
+        else{
+            let alertView=UIAlertView(title: "提示", message: "改签成功，您可以在已付款的订单中查看", delegate: self, cancelButtonTitle: "确定")
+            alertView.tag=21
+            alertView.show()
+        }
+    }
+    
+    //支付
+    func pay() {
+        if orderId != nil {
+            //支付参数 （lineId,classId为后续选座接口备用,必传）
+//            let orderType = (lineDetailData?.objectForKey("isOrderGroup") as! Int) == 0 ? "1" : "2"
+            let param:NSDictionary = ["action":"pay_alipay","orderNo":orderId,"sysType":"IOS","orderType":"4"]
+            //创建支付宝支付Model单例
+            let alipayModel = CPAlipayModel.shareCPAlipayModel()
+            alipayModel.setValuesForKeysWithDictionary(param as! [String : AnyObject])
+            print(param)
+            //调起支付模块
+            
+            [alipayModel.alipaySuccessBlock({ (responseObject) in
+                self.alipaySuccess()
+                
+                }, failureBlock: { (error) in
+                    print(error)
+                    self.alipayFail()
+            })];
+        }
+        else{
+            let alertView=UIAlertView(title: "提示", message: "支付异常，请联系开发人员", delegate: self, cancelButtonTitle: "确定")
+            alertView.show()
+        }
+        
+    }
+    
+    //支付成功
+    func alipaySuccess() {
+        print("支付成功")
+        let payVC = CPPayResultController()
+        self.navigationController?.pushViewController(payVC, animated: true)
+    }
+    
+    //支付失败
+    func alipayFail() {
+        print("支付失败")
+        let payFailVC = CPPayFailResultController()
+        self.navigationController?.pushViewController(payFailVC, animated: true)
+    }
+    
+    //获取乘客列表
+    func getPsgList(){
+        lineInfoModel.getPassger(Constants.userInfoURL, para: passgerAction) { (resultList) in
+            weak var weakSelf=self
+            weakSelf!.lineInfoView.resultList=resultList
+            self.psgResultList=resultList
+        }
+        lineInfoView.addPassgerBtn.addTarget(self, action: #selector(CPLineInfoController.addPsgId), forControlEvents: UIControlEvents.TouchUpInside)
+    }
+
+    //获取乘客通讯地址
+    func getPsgAddress(){
+        lineInfoModel.getPassgerAddress(Constants.userInfoURL, para: passgerAddress) { (resultList) in
+            weak var weakSelf=self
+            weakSelf!.lineInfoView.psgAddressAr=resultList
+            weakSelf!.lineInfoView.psgAddressAr2=resultList.count
+        }
+    }
+    //点击确定跳转
+    func alertView(alertView: UIAlertView, clickedButtonAtIndex buttonIndex: Int) {
+        if(alertView.tag==21){
+            let vc=CPMyOrdersViewController()
+            self.navigationController?.pushViewController(vc, animated: true)   //已付款页面
+        }
+    }
+    //站点转换
+    func getGradeString(str: String) -> String {
+        var grade:String = ""
+        var sign = true
+        
+        for c in str.characters {
+            sign = true
+            switch c {
+            case "1" :
+                grade = grade + "一年级"
+            case "2" :
+                grade = grade + "二年级"
+            case "3" :
+                grade = grade + "三年级"
+            case "4" :
+                grade = grade + "四年级"
+            case "5" :
+                grade = grade + "五年级"
+            case "6" :
+                grade = grade + "六年级"
+            case "7" :
+                grade = grade + "初一"
+            case "8" :
+                grade = grade + "初二"
+            case "9" :
+                grade = grade + "初三"
+            case "a" :
+                grade = grade + "高一"
+            case "b" :
+                grade = grade + "高二"
+            case "c" :
+                grade = grade + "高三"
+            default:
+                sign = false
+                break
+            }
+            
+            if sign {
+                grade = grade + "、"
+            }
+        }
+        
+        
+        let index2 = grade.endIndex.advancedBy(-1)
+        grade=grade.substringToIndex(index2)
+        
+        return grade
+    }
+
+
+
+
+
+    // MARK: - Navigation
+
+    // In a storyboard-based application, you will often want to do a little preparation before navigation
+    override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
+        // Get the new view controller using segue.destinationViewController.
+        // Pass the selected object to the new view controller.
+    }
+
+
+}
+
+

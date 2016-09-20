@@ -1,0 +1,161 @@
+//
+//  ZConstants.swift
+//  i84cpn
+//
+//  Created by 周杰 on 16/5/14.
+//  Copyright © 2016年 5i84. All rights reserved.
+//
+
+import Foundation
+import UIKit
+
+//-------------屏幕尺寸--------------
+let SCREEN_WIDTH=UIScreen.mainScreen().bounds.size.width
+let SCREEN_HEIGHT=UIScreen.mainScreen().bounds.size.height
+
+func WIDTH_DYNAMIC(width:CGFloat)->CGFloat{
+    return width*1.0*SCREEN_WIDTH/375.0
+}
+
+func HEIGHT_DYNAMIC(height:CGFloat)->CGFloat{
+    return height*1.0*SCREEN_HEIGHT/667.0
+}
+
+//－－－－－－－－－－－－－16进制颜色码转换－－－－－－－－－－－－－
+extension UIColor {
+    static func hexStringToColor(hexString: String) -> UIColor{
+        var cString: String = hexString.stringByTrimmingCharactersInSet(NSCharacterSet.whitespaceAndNewlineCharacterSet())
+        
+        if cString.characters.count < 6 {return UIColor.blackColor()}
+        if cString.hasPrefix("0X") {cString = cString.substringFromIndex(cString.startIndex.advancedBy(2))}
+        if cString.hasPrefix("#") {cString = cString.substringFromIndex(cString.startIndex.advancedBy(1))}
+        if cString.characters.count != 6 {return UIColor.blackColor()}
+        
+        var range: NSRange = NSMakeRange(0, 2)
+        
+        let rString = (cString as NSString).substringWithRange(range)
+        range.location = 2
+        let gString = (cString as NSString).substringWithRange(range)
+        range.location = 4
+        let bString = (cString as NSString).substringWithRange(range)
+        
+        var r: UInt32 = 0x0
+        var g: UInt32 = 0x0
+        var b: UInt32 = 0x0
+        NSScanner.init(string: rString).scanHexInt(&r)
+        NSScanner.init(string: gString).scanHexInt(&g)
+        NSScanner.init(string: bString).scanHexInt(&b)
+        
+        return UIColor(red: CGFloat(r)/255.0, green: CGFloat(g)/255.0, blue: CGFloat(b)/255.0, alpha: CGFloat(1))
+    }
+}
+
+//--------------App配色表----------------
+let COLOR_BACKGROUND_GRAY=UIColor.hexStringToColor("F0F0F0")    //背景灰
+let COLOR_MAIN=UIColor.hexStringToColor("FFDA2A")               //主色调
+let COLOR_TEXT_YELLOW = UIColor.hexStringToColor("F9CA00")      //黄色字
+let COLOR_TEXT_TITLE=UIColor.hexStringToColor("333333")         //标题文字颜色
+let COLOR_TEXT=UIColor.hexStringToColor("666666")               //正文颜色
+let COLOR_TEXT_TIP=UIColor.hexStringToColor("999999")           //提示颜色
+let COLOR_TEXT_RED = UIColor.hexStringToColor("FC8663")         //红色字
+let COLOR_TEXT_HIGHLIGHTED=UIColor.hexStringToColor("FF0000")   //红色高亮
+let COLOR_SEGMENTATION=UIColor.hexStringToColor("E5E5E5")       //分割线颜色
+let COLOR_ASSISTANT=UIColor.hexStringToColor("584024")          //辅助色
+let COLOR_BUTTON_GREEN=UIColor.hexStringToColor("81cb4e")       //绿色按钮
+let COLOR_BUTTON_BLUE=UIColor.hexStringToColor("6ac0e3")        //蓝色按钮
+let COLOR_TEXT_ORANGE=UIColor(red: 250/255, green: 135/255, blue: 105/255, alpha: 1)
+
+
+//---------------下划线--------------------------
+//
+//func UNDERLINE(underLineText:String)->NSMutableAttributedString{
+////    let lb=UILabel()
+//    let attrs=[NSUnderlineColorAttributeName:COLOR_TEXT_ORANGE,NSUnderlineStyleAttributeName:1]
+//    let underLineStr=NSMutableAttributedString(string: underLineText, attributes: attrs)
+////    lb.attributedText=underLineStr
+//    return underLineStr
+//}
+extension UILabel  //扩展，下划线
+{
+    static func underLine(underLineText:String)->UILabel{
+        let lb=UILabel()
+        let attrs=[NSUnderlineColorAttributeName:COLOR_TEXT_ORANGE,NSUnderlineStyleAttributeName:1]
+        let underLineStr=NSMutableAttributedString(string: underLineText, attributes: attrs)
+        lb.attributedText=underLineStr
+        return lb
+    }
+}
+
+
+//----------------为UIBarButtonItem扩展一个方法--------------
+extension UIBarButtonItem
+{
+    static func item(target:AnyObject,action:Selector,image:String,highImage:String)->UIBarButtonItem {
+        let item=UIButton()
+        
+        
+        item.setBackgroundImage(UIImage(named: image)?.imageWithRenderingMode(UIImageRenderingMode.AlwaysOriginal), forState: UIControlState.Normal)
+        item.setBackgroundImage(UIImage(named: highImage)?.imageWithRenderingMode(UIImageRenderingMode.AlwaysOriginal), forState: UIControlState.Highlighted)
+        
+        item.frame.size=item.currentBackgroundImage!.size
+        item.addTarget(target, action: action, forControlEvents: UIControlEvents.TouchUpInside)
+        return UIBarButtonItem(customView: item)
+    }
+}
+
+//站点转换
+func getGradeString(str: String) -> String {
+    var grade:String = ""
+    var sign = true
+    
+    for c in str.characters {
+        sign = true
+        switch c {
+        case "1" :
+            grade = grade + "一年级"
+        case "2" :
+            grade = grade + "二年级"
+        case "3" :
+            grade = grade + "三年级"
+        case "4" :
+            grade = grade + "四年级"
+        case "5" :
+            grade = grade + "五年级"
+        case "6" :
+            grade = grade + "六年级"
+        case "7" :
+            grade = grade + "初一"
+        case "8" :
+            grade = grade + "初二"
+        case "9" :
+            grade = grade + "初三"
+        case "a" :
+            grade = grade + "高一"
+        case "b" :
+            grade = grade + "高二"
+        case "c" :
+            grade = grade + "高三"
+        default:
+            sign = false
+            break
+        }
+        
+        if sign {
+            grade = grade + "、"
+        }
+    }
+    
+    if grade != "" {
+        let index2 = grade.endIndex.advancedBy(-1)
+        grade=grade.substringToIndex(index2)
+    }
+    
+    
+    return grade
+}
+
+
+
+
+
+

@@ -1,0 +1,164 @@
+//
+//  CPUserInfoViewController.swift
+//  i84cpn
+//
+//  Created by BenjaminRichard on 16/5/11.
+//  Copyright © 2016年 5i84. All rights reserved.
+//
+
+import UIKit
+
+class CPUserInfoViewController: CMBaseViewController, UIAlertViewDelegate, UIImagePickerControllerDelegate, UINavigationControllerDelegate, UserModelDelegate {
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        title = "个人信息"
+        view.addSubview(userInfoView)
+        userInfoView.frame = view.frame
+    }
+
+    override func viewWillAppear(animated: Bool) {
+        super.viewWillAppear(animated)
+        CPUserModel.delegate = self
+        CPUserModel.getUserInfo()
+        
+    }
+    
+    override func viewDidAppear(animated: Bool) {
+        super.viewDidAppear(animated)
+        userInfoView.headButton.addTarget(self, action: #selector(changeHeadImage), forControlEvents: .TouchUpInside)
+        userInfoView.headImageView.addTarget(self, action: #selector(changeHeadImage), forControlEvents: .TouchUpInside)
+        userInfoView.petNameButton.addTarget(self, action: #selector(changePetName), forControlEvents: .TouchUpInside)
+        userInfoView.passwordButton.addTarget(self, action: #selector(changePassword), forControlEvents: .TouchUpInside)
+        userInfoView.nameButton.addTarget(self, action: #selector(validateName), forControlEvents: .TouchUpInside)
+        userInfoView.addressButton.addTarget(self, action: #selector(changeAddress), forControlEvents: .TouchUpInside)
+        userInfoView.phoneNumButton.addTarget(self, action: #selector(changePhoneNum), forControlEvents: .TouchUpInside)
+        userInfoView.rideInfoButton.addTarget(self, action: #selector(changeRideInfo), forControlEvents: .TouchUpInside)
+        
+    }
+    
+    override func viewWillDisappear(animated: Bool) {
+        super.viewWillDisappear(animated)
+        CPUserModel.delegate = nil
+    }
+    
+        // 事件响应
+    func changeHeadImage(button: UIButton) {
+        let alertView = UIAlertView(title: "请选择头像", message: "", delegate: self, cancelButtonTitle: "取消", otherButtonTitles: "拍照", "从手机相册选择")
+        alertView.show()
+    }
+    
+    // 打开本地图片
+    func localPhoto() {
+        let vc = UIImagePickerController()
+        vc.allowsEditing = true // 可编辑状态
+        vc.modalTransitionStyle = UIModalTransitionStyle.CrossDissolve // 页面跳转效果
+        vc.delegate = self
+        self.presentViewController(vc, animated: true, completion: nil)
+    }
+    
+    // 拍照
+    func cameraImage() {
+        let vc = UIImagePickerController()
+        vc.sourceType = UIImagePickerControllerSourceType.Camera // 拍照模式，默认为本地照片
+        vc.allowsEditing = true // 可编辑状态
+        vc.modalTransitionStyle = UIModalTransitionStyle.CrossDissolve // 页面跳转效果
+        vc.delegate = self
+        self.presentViewController(vc, animated: true, completion: nil)
+    }
+   
+    
+    // delegate
+    func userInfoReloadData() {
+        userInfoView.reloadData()
+    }
+    
+    func alertView(alertView: UIAlertView, clickedButtonAtIndex buttonIndex: Int) {
+        switch buttonIndex {
+        case 1:
+            cameraImage()
+        case 2:
+            localPhoto()
+        default: break
+        }
+    }
+    
+    func imageWithImage(image: UIImage, newSize: CGSize) -> UIImage {
+        UIGraphicsBeginImageContext(newSize)
+        image.drawInRect(CGRectMake(0, 0, newSize.width, newSize.height))
+        let newImage = UIGraphicsGetImageFromCurrentImageContext()
+        UIGraphicsEndImageContext()
+        return newImage
+    }
+    
+    func imagePickerController(picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [String : AnyObject]) {
+        // 图片转String
+        var img = info["UIImagePickerControllerEditedImage"] as! UIImage
+        img = imageWithImage(img, newSize: CGSizeMake(100, 100))
+        let imgData = UIImageJPEGRepresentation(img, 0.7)
+        
+        let imageDataArray:Array = [imgData!]
+        CPAFHTTPSessionManager.multiUploadWithUrlString(Constants.fileApiURL, params: Constants.editUserHeadView(), imageDataArray: imageDataArray, progressBlock: { (progress) in
+            
+            }, successBlock: { (respondData) in
+                var dic:NSDictionary = respondData as! NSDictionary
+                let rsp: Bool = dic["success"] as! Bool
+                if rsp {
+                    dic = dic["result"] as! NSDictionary
+                    if dic.objectForKey("success") as! Bool {
+                        CPUserModel.imageName = dic.objectForKey("userPic") as? String
+                        self.userInfoView.reloadData()
+                    } else {
+                        print(dic.objectForKey("msg") as! String)
+                    }
+                } else {
+                    Constants.dPrint(dic)
+                }
+                
+            }, failureBlock: { (error) in
+                print(error)
+        })
+        
+        picker.dismissViewControllerAnimated(true, completion: nil)
+    }
+
+    
+    func changePetName(button: UIButton) {
+        let vc = CPPetNameViewController()
+        self.hidesBottomBarWhenPushed=true
+        self.navigationController?.pushViewController(vc, animated: true)
+    }
+    
+    func changePassword(button: UIButton) {
+        let vc = CPPasswordChangeViewController()
+        self.hidesBottomBarWhenPushed=true
+        self.navigationController?.pushViewController(vc, animated: true)
+    }
+    
+    func validateName(button: UIButton) {
+        let vc = CPRealNameViewController()
+        self.hidesBottomBarWhenPushed=true
+        self.navigationController?.pushViewController(vc, animated: true)
+    }
+    
+    func changeAddress(button: UIButton) {
+        let vc = CPAddressManangeViewController()
+        self.hidesBottomBarWhenPushed=true
+        self.navigationController?.pushViewController(vc, animated: true)
+    }
+    
+    func changePhoneNum(button: UIButton) {
+        let vc = CPPhoneNumCheckViewController()
+        self.hidesBottomBarWhenPushed=true
+        self.navigationController?.pushViewController(vc, animated: true)
+    }
+    
+    func changeRideInfo(button: UIButton) {
+        let vc = CPRideInfoSettingViewController()
+        self.hidesBottomBarWhenPushed=true
+        self.navigationController?.pushViewController(vc, animated: true)
+    }
+    
+    
+    private let userInfoView = CPUserInfoView()
+}

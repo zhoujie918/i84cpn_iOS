@@ -1,0 +1,145 @@
+//
+//  CPNewSuggestionViewController.swift
+//  i84cpn
+//
+//  Created by 杰伦 on 16/5/29.
+//  Copyright © 2016年 5i84. All rights reserved.
+//
+
+import UIKit
+
+class CPNewSuggestionViewController: CMBaseViewController, UIAlertViewDelegate, UIImagePickerControllerDelegate, UINavigationControllerDelegate, CPPhotoCollectionViewDelegate {
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        title = "意见反馈"
+        view.addSubview(newSuggestionView)
+        newSuggestionView.frame = view.frame
+    }
+    
+    override func viewWillAppear(animated: Bool) {
+        super.viewWillAppear(animated)
+        
+        self.loadData()
+    }
+    
+    override func viewDidAppear(animated: Bool) {
+        super.viewDidAppear(animated)
+        
+        newSuggestionView.delegate = self
+        
+        newSuggestionView.submitButton.addTarget(self, action: #selector(upLoadImage), forControlEvents: .TouchUpInside)
+    }
+
+    
+    func loadData() {
+        CPAFHTTPSessionManager.postWithUrlString(Constants.noauthApiURL, parameter: Constants.getSuggestionsProblemType(), progressBlock: nil, successBlock: { (respondData) in
+                var dic = respondData as! NSDictionary
+                if dic.objectForKey("success") as! Bool {
+                    dic = dic.objectForKey("result") as! NSDictionary
+                    if dic.objectForKey("success") as! Bool {
+                        self.problemType = dic.objectForKey("cates") as? NSMutableArray
+                        if self.problemType?.count != 0 {
+                            self.newSuggestionView.reloadData(self.problemType!)
+                        }
+                    }
+                } else {
+                    Constants.dPrint(dic.objectForKey("msg"))
+            }
+            }) { (error) in
+                Constants.dPrint(error)
+        }
+    }
+    
+    func imageWithImage(image: UIImage, newSize: CGSize) -> UIImage {
+        UIGraphicsBeginImageContext(newSize)
+        image.drawInRect(CGRectMake(0, 0, newSize.width, newSize.height))
+        let newImage = UIGraphicsGetImageFromCurrentImageContext()
+        UIGraphicsEndImageContext()
+        return newImage
+    }
+    
+    // 事件响应
+    func upLoadImage(button: UIButton) {
+        let type = newSuggestionView.getType()
+        if problemType == nil || problemType?.count == 0 || problemType![type].objectForKey("code") == nil {
+            return
+        }
+        if newSuggestionView.isInput() == false {
+            let alertView = UIAlertView(title: "提示", message: "请输入您要反馈的问题", delegate: self, cancelButtonTitle: "确定")
+            alertView.show()
+            return
+        }
+        
+        let code = problemType![type].objectForKey("code") as! String
+        let text = newSuggestionView.getText().dataUsingEncoding(NSUTF8StringEncoding)
+        let content = text!.base64EncodedStringWithOptions(.Encoding64CharacterLineLength)
+//        let content = newSuggestionView.getText()
+        let imageArray = newSuggestionView.getImageArray()
+        let dataArray = NSMutableArray()
+        for image in imageArray {
+            var img = image as! UIImage
+            img = imageWithImage(img, newSize: CGSizeMake(100, 100))
+            let imgData = UIImageJPEGRepresentation(img, 0.7)
+            dataArray.addObject(imgData!)
+        }
+        Constants.dPrint(dataArray.count)
+        let hud = MBProgressHUD.showHUDAddedTo(self.navigationController?.view, animated: true)
+        hud.labelText = "上传中"
+        CPAFHTTPSessionManager.uploadNewSuggestionWithUrlString(Constants.fileApiURL, params: Constants.submitSuggestionsProblem(code, content: content), imageDataArray: dataArray as [AnyObject], progressBlock: nil, successBlock: { (respondData) in
+//                Constants.dPrint(respondData)
+                self.navigationController?.popViewControllerAnimated(true)
+                hud.hide(true, afterDelay: 0.7)
+            }) { (error) in
+                Constants.dPrint(error)
+                hud.hide(true, afterDelay: 0.7)
+        }
+    }
+    
+    func addImage() {
+        let alertView = UIAlertView(title: "请选择图片", message: "", delegate: self, cancelButtonTitle: "取消", otherButtonTitles: "拍照", "从手机相册选择")
+        alertView.show()
+    }
+    
+    // 打开本地图片
+    func localPhoto() {
+        let vc = UIImagePickerController()
+        vc.allowsEditing = true // 可编辑状态
+        vc.modalTransitionStyle = UIModalTransitionStyle.CrossDissolve // 页面跳转效果
+        vc.delegate = self
+        self.presentViewController(vc, animated: true, completion: nil)
+    }
+    
+    // 拍照
+    func cameraImage() {
+        let vc = UIImagePickerController()
+        vc.sourceType = UIImagePickerControllerSourceType.Camera // 拍照模式，默认为本地照片
+        vc.allowsEditing = true // 可编辑状态
+        vc.modalTransitionStyle = UIModalTransitionStyle.CrossDissolve // 页面跳转效果
+        vc.delegate = self
+        self.presentViewController(vc, animated: true, completion: nil)
+    }
+    
+    
+    // delegate
+    func alertView(alertView: UIAlertView, clickedButtonAtIndex buttonIndex: Int) {
+        switch buttonIndex {
+        case 1:
+            cameraImage()
+        case 2:
+            localPhoto()
+        default: break
+        }
+    }
+    
+    func imagePickerController(picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [String : AnyObject]) {
+        // 图片转String
+        let img = info["UIImagePickerControllerEditedImage"] as! UIImage
+        newSuggestionView.insertImage(img)
+        
+        picker.dismissViewControllerAnimated(true, completion: nil)
+    }
+
+    private let newSuggestionView = CPNewSuggestionView()
+    private var problemType: NSMutableArray?
+}

@@ -1,0 +1,164 @@
+//
+//  CPAFHTTPSessionManager.m
+//  i84cpn
+//
+//  Created by BenjaminRichard on 16/5/17.
+//  Copyright © 2016年 5i84. All rights reserved.
+//
+
+#import "CPAFHTTPSessionManager.h"
+
+@implementation CPAFHTTPSessionManager
+
++ (instancetype)shareHttpMangager {
+    static CPAFHTTPSessionManager *_sharedHttpManager = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        NSURLSessionConfiguration *configuration = [NSURLSessionConfiguration defaultSessionConfiguration];
+        _sharedHttpManager = [[CPAFHTTPSessionManager alloc] initWithSessionConfiguration:configuration];
+        _sharedHttpManager.requestSerializer = [AFHTTPRequestSerializer serializer];
+        _sharedHttpManager.responseSerializer = [AFHTTPResponseSerializer serializer];
+        _sharedHttpManager.responseSerializer.acceptableContentTypes = [NSSet setWithObjects:@"application/json", @"text/json", @"text/javascript",@"text/html", @"text/plain", @"image/jpeg", nil];
+
+    });
+    
+
+    
+    return _sharedHttpManager;
+}
+
++(void)multiUploadWithUrlString:(NSString *)url params:(NSDictionary *)params ImageDataArray:(NSArray *)arrData progressBlock:(void (^)(NSProgress *))progress successBlock:(void (^)(id))success failureBlock:(void (^)(NSError *))failure{
+    //进行上传数据的保存操作
+    [[CPAFHTTPSessionManager shareHttpMangager]  POST:url parameters:params constructingBodyWithBlock:^(id<AFMultipartFormData>  _Nonnull formData) {
+        
+        /*
+         第一个参数：将要上传的数据的原始路径
+         第二个参数：要上传的路径的key
+         第三个参数：上传后文件的别名
+         第四个参数：原始图片的格式
+         */
+        for (int i=0; i<arrData.count; i++) {
+            [formData appendPartWithFileData:arrData[i] name:@"files" fileName:@"image.jpg" mimeType:@"image/jpg"];
+        }
+        
+        
+    } progress:^(NSProgress * _Nonnull uploadProgress) {
+        if (progress) {
+            progress(uploadProgress);
+        }
+    } success:^(NSURLSessionDataTask * _Nonnull task, id  _Nullable responseObject) {
+        if (success) {
+//            NSArray *cookies = [[NSHTTPCookieStorage sharedHTTPCookieStorage] cookies];
+//            NSHTTPCookie *cookie;
+//            for (cookie in cookies) {
+//                [[NSHTTPCookieStorage sharedHTTPCookieStorage] setCookie:cookie];
+//            }
+            NSDictionary *dic = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableContainers error:nil];
+            success(dic);
+        }
+        
+    } failure:^(NSURLSessionDataTask * _Nullable task, NSError * _Nonnull error) {
+        if (failure) {
+            failure(error);
+        }
+    }];
+}
+
+
++ (void)getWithUrlString:(NSString *)url parameter:(NSDictionary *)param progressBlock:(void (^)(NSProgress *))progress successBlock:(void (^)(id))success failureBlock:(void (^)(NSError *))failure{
+    
+    [[CPAFHTTPSessionManager shareHttpMangager] GET:url parameters:param progress:^(NSProgress * _Nonnull downloadProgress) {
+        if (progress) {
+            progress(downloadProgress);
+        }
+    } success:^(NSURLSessionDataTask * _Nonnull task, id  _Nullable responseObject) {
+        if (success) {
+//            NSArray *cookies = [[NSHTTPCookieStorage sharedHTTPCookieStorage] cookies];
+//            NSHTTPCookie *cookie;
+//            for (cookie in cookies) {
+//                [[NSHTTPCookieStorage sharedHTTPCookieStorage] setCookie:cookie];
+//            }
+            success(responseObject);
+        }
+    } failure:^(NSURLSessionDataTask * _Nullable task, NSError * _Nonnull error) {
+        if (failure) {
+            failure(error);
+        }
+    }];
+}
+
++ (void)getJsonWithUrlString:(NSString *)url parameter:(NSDictionary *)param progressBlock:(void (^)(NSProgress *))progress successBlock:(void (^)(id))success failureBlock:(void (^)(NSError *))failure{
+    
+    [[CPAFHTTPSessionManager shareHttpMangager] GET:url parameters:param progress:^(NSProgress * _Nonnull downloadProgress) {
+        if (progress) {
+            progress(downloadProgress);
+        }
+    } success:^(NSURLSessionDataTask * _Nonnull task, id  _Nullable responseObject) {
+        if (success) {
+//            NSArray *cookies = [[NSHTTPCookieStorage sharedHTTPCookieStorage] cookies];
+//            NSHTTPCookie *cookie;
+//            for (cookie in cookies) {
+//                [[NSHTTPCookieStorage sharedHTTPCookieStorage] setCookie:cookie];
+//            }
+            NSDictionary *dic = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableContainers error:nil];
+            success(dic);
+        }
+    } failure:^(NSURLSessionDataTask * _Nullable task, NSError * _Nonnull error) {
+        if (failure) {
+            failure(error);
+        }
+    }];
+}
+
++ (void)postWithUrlString:(NSString *)url parameter:(NSDictionary *)param progressBlock:(void (^)(NSProgress *))progress successBlock:(void (^)(id))success failureBlock:(void (^)(NSError *))failure{
+
+    [[CPAFHTTPSessionManager shareHttpMangager] POST:url parameters:param progress:^(NSProgress * _Nonnull uploadProgress) {
+        if (progress) {
+            progress(uploadProgress);
+        }
+    } success:^(NSURLSessionDataTask * _Nonnull task, id  _Nullable responseObject) {
+        if (success) {
+            if ([url isEqualToString:URL_LOGIN]) {
+                NSArray *cookies = [[NSHTTPCookieStorage sharedHTTPCookieStorage] cookies];
+                NSLog(@"%@", cookies);
+                NSHTTPCookie *cookie;
+                for (cookie in cookies) {
+                    [[NSHTTPCookieStorage sharedHTTPCookieStorage] setCookie:cookie];
+                }
+            }
+            
+            NSDictionary *dic = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableContainers error:nil];
+            success(dic);
+        }
+    } failure:^(NSURLSessionDataTask * _Nullable task, NSError * _Nonnull error) {
+        if (failure) {
+            failure(error);
+        }
+    }];
+}
+
+
++(void)postJsonWithUrlString:(NSString *)url parameter:(NSDictionary *)param progressBlock:(void (^)(NSProgress *))progress successBlock:(void (^)(id))success failureBlock:(void (^)(NSError *))failure{
+    [[CPAFHTTPSessionManager shareHttpMangager] POST:url parameters:param progress:^(NSProgress * _Nonnull uploadProgress) {
+        if (progress) {
+            progress(uploadProgress);
+        }
+    } success:^(NSURLSessionDataTask * _Nonnull task, id  _Nullable responseObject) {
+        if (success) {
+//            NSArray *cookies = [[NSHTTPCookieStorage sharedHTTPCookieStorage] cookies];
+//            NSHTTPCookie *cookie;
+//            for (cookie in cookies) {
+//                [[NSHTTPCookieStorage sharedHTTPCookieStorage] setCookie:cookie];
+//            }
+            success(responseObject);
+        }
+    } failure:^(NSURLSessionDataTask * _Nullable task, NSError * _Nonnull error) {
+        if (failure) {
+            failure(error);
+        }
+    }];
+}
+
+
+
+@end

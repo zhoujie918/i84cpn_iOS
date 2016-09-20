@@ -1,0 +1,90 @@
+//
+//  CPPassengerInfoTableViewCell.swift
+//  i84cpn
+//
+//  Created by BenjaminRichard on 16/5/23.
+//  Copyright © 2016年 5i84. All rights reserved.
+//
+
+import UIKit
+
+class CPPassengerInfoTableViewCell: UITableViewCell {
+
+    required init(coder aDecoder: NSCoder) {
+        super.init(coder: aDecoder)!
+    }
+    override init(style: UITableViewCellStyle, reuseIdentifier: String?) {
+        super.init(style: style, reuseIdentifier: reuseIdentifier)
+        
+        self.addSubview(nameLabel)
+        self.addSubview(idTitleLabel)
+        self.addSubview(idLabel)
+        self.addSubview(headImageView)
+        self.addSubview(rightItem)
+    }
+
+    override func layoutSubviews() {
+        headImageView.snp_makeConstraints { (make) in
+            make.centerY.equalTo(self)
+            make.right.equalTo(rightItem.snp_left).offset(-10)
+            make.width.height.equalTo(60)
+        }
+        
+        rightItem.snp_makeConstraints { (make) in
+            make.centerY.equalTo(self)
+            make.right.equalTo(-20)
+            make.width.equalTo(8)
+        }
+        
+        nameLabel.snp_makeConstraints { (make) in
+            make.top.equalTo(headImageView.snp_top).offset(8)
+            make.left.equalTo(20)
+            make.right.equalTo(headImageView.snp_left).offset(-20)
+        }
+        
+        idTitleLabel.snp_makeConstraints { (make) in
+            make.left.equalTo(nameLabel)
+            make.bottom.equalTo(headImageView).offset(-8)
+        }
+        
+        idLabel.snp_makeConstraints { (make) in
+            make.left.equalTo(idTitleLabel.snp_right).offset(10)
+            make.bottom.equalTo(idTitleLabel)
+            make.right.equalTo(nameLabel)
+        }
+    }
+    
+    let nameLabel: UILabel = {
+        let view = UILabel()
+        view.font = Constants.mediumFont
+        return view
+    } ()
+    
+    private let idTitleLabel: UILabel = {
+        let view = UILabel()
+        view.font = Constants.smallFont
+        view.textColor = Constants.paleWordColor
+        view.text = "身份证"
+        return view
+    } ()
+    let idLabel: UILabel = {
+        let view = UILabel()
+        view.font = Constants.smallFont
+        view.textColor = Constants.paleWordColor
+        return view
+    } ()
+    
+    let headImageView: UIImageView = {
+        let view = UIImageView()
+        view.image = UIImage(named: "img_default")
+        view.layer.cornerRadius = 60 * 0.5;
+        view.layer.masksToBounds = true;
+        return view
+    } ()
+    
+    private let rightItem: UIImageView = {
+        let view = UIImageView()
+        view.image = UIImage(named: "icon_in02")
+        return view
+    } ()
+}

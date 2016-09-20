@@ -1,0 +1,127 @@
+//
+//  CPAddressManageView.swift
+//  i84cpn
+//  添加地址界面
+//  Created by BenjaminRichard on 16/5/13.
+//  Copyright © 2016年 5i84. All rights reserved.
+//
+
+import UIKit
+
+class CPAddAddressView: UIView {
+
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        self.backgroundColor = Constants.paleBGColor
+        self.addSubview(addressButton)
+        self.addSubview(addressTextView)
+        self.addSubview(addressTipButton)
+        self.addSubview(defaultAddressButton)
+        self.addSubview(defaultAddressLabel)
+        self.addSubview(saveButton)
+    }
+    
+    required init?(coder aDecoder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    override func layoutSubviews() {
+        addressButton.snp_makeConstraints { (make) in
+            make.top.equalTo(100)
+            make.left.equalTo(20)
+            make.right.equalTo(-20)
+            make.height.equalTo(40)
+        }
+        
+        addressTextView.snp_makeConstraints { (make) in
+            make.left.right.equalTo(addressButton)
+            make.top.equalTo(addressButton.snp_bottom).offset(20)
+            make.height.equalTo(150)
+        }
+        
+        addressTipButton.snp_makeConstraints { (make) in
+            make.left.top.equalTo(addressTextView).offset(10)
+        }
+        
+        defaultAddressButton.snp_makeConstraints { (make) in
+            make.left.equalTo(addressButton)
+            make.top.equalTo(addressTextView.snp_bottom).offset(20)
+        }
+        
+        defaultAddressLabel.snp_makeConstraints { (make) in
+            make.left.equalTo(defaultAddressButton.snp_right).offset(15)
+            make.bottom.equalTo(defaultAddressButton)
+        }
+        
+        saveButton.snp_makeConstraints { (make) in
+            make.left.right.equalTo(addressButton)
+            make.top.equalTo(defaultAddressButton.snp_bottom).offset(40)
+            make.height.equalTo(40)
+        }
+    }
+
+    func setSelectedAreaStatus() {
+        isSelectedArea = true
+    }
+    
+    func getSelectedAreaStatus() -> Bool {
+        return isSelectedArea
+    }
+    
+    func getAddress() -> String {
+        return (addressButton.titleLabel?.text)! + addressTextView.text
+    }
+    
+    // 属性
+    // 是否设置为默认地址（勾 的状态）
+    var isDefault: Bool = true
+    // 是否已经选择了地区
+    private var isSelectedArea: Bool = false
+    
+    let addressButton: UIButton = {
+        let view = UIButton()
+        view.setTitle("点击选择所在地区", forState: .Normal)
+        view.backgroundColor = Constants.whiteWordColor
+        view.setTitleColor(Constants.paleWordColor, forState: .Normal)
+        view.titleEdgeInsets = UIEdgeInsetsMake(15, 15, 15, 15)
+        view.titleLabel?.font = Constants.mediumFont
+        view.contentHorizontalAlignment = UIControlContentHorizontalAlignment.Left
+        return view
+    } ()
+    
+    let addressTipButton: UIButton = {
+        let view = UIButton()
+        view.setTitle("请输入详细地址", forState: .Normal)
+        view.setTitleColor(Constants.paleWordColor, forState: .Normal)
+        view.titleLabel?.font = Constants.mediumFont
+        return view
+    } ()
+    
+    let addressTextView: UITextView = {
+        let view = UITextView()
+        view.font = Constants.mediumFont
+        return view
+    } ()
+    
+    let defaultAddressButton: UIButton = {
+        let view = UIButton()
+        view.setImage(UIImage(named: "icon_sel"), forState: .Normal)
+        return view
+    } ()
+    
+    let defaultAddressLabel: UILabel = {
+        let view = UILabel()
+        view.textColor = Constants.yellowWordColor
+        view.text = "设为默认通讯地址"
+        return view
+    } ()
+    
+    let saveButton: UIButton = {
+        let view = UIButton()
+        view.setBackgroundImage(UIImage(named: "btn_login_nor"), forState: .Normal)
+        view.setTitleColor(Constants.whiteWordColor, forState: .Normal)
+        view.setTitle("保 存", forState: .Normal)
+        view.layer.cornerRadius = 16
+        return view
+    } ()
+}

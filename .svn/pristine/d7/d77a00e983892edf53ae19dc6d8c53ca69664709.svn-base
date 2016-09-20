@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="10117" systemVersion="15E65" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES">
+    <dependencies>
+        <deployment identifier="iOS"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="10085"/>
+    </dependencies>
+    <objects>
+        <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner"/>
+        <placeholder placeholderIdentifier="IBFirstResponder" id="-2" customClass="UIResponder"/>
+        <collectionReusableView opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" reuseIdentifier="CPChooseSeatHeaderView" id="QRi-AC-Vd0">
+            <rect key="frame" x="0.0" y="0.0" width="375" height="80"/>
+            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+            <subviews>
+                <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="img_busgold" translatesAutoresizingMaskIntoConstraints="NO" id="5O0-OZ-UnP">
+                    <rect key="frame" x="20" y="38" width="40" height="40"/>
+                    <constraints>
+                        <constraint firstAttribute="height" constant="40" id="YBV-ss-3Jx"/>
+                        <constraint firstAttribute="width" constant="40" id="b7v-fM-JSd"/>
+                    </constraints>
+                </imageView>
+                <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="qEV-gc-S2v">
+                    <rect key="frame" x="30" y="23" width="129" height="1"/>
+                    <color key="backgroundColor" red="0.59999999999999998" green="0.59999999999999998" blue="0.59999999999999998" alpha="1" colorSpace="calibratedRGB"/>
+                    <constraints>
+                        <constraint firstAttribute="height" constant="1" id="ngK-xg-EMI"/>
+                    </constraints>
+                </view>
+                <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="0AW-Nw-sdc">
+                    <rect key="frame" x="218" y="23" width="127" height="1"/>
+                    <color key="backgroundColor" red="0.59999999999999998" green="0.59999999999999998" blue="0.59999999999999998" alpha="1" colorSpace="calibratedRGB"/>
+                    <constraints>
+                        <constraint firstAttribute="height" constant="1" id="J5r-kr-MsX"/>
+                    </constraints>
+                </view>
+                <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="车   头" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="1QB-Zn-AOO">
+                    <rect key="frame" x="163" y="13" width="50" height="21"/>
+                    <constraints>
+                        <constraint firstAttribute="width" constant="50" id="gEf-vL-V7Q"/>
+                    </constraints>
+                    <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                    <color key="textColor" cocoaTouchSystemColor="darkTextColor"/>
+                    <nil key="highlightedColor"/>
+                </label>
+            </subviews>
+            <constraints>
+                <constraint firstItem="1QB-Zn-AOO" firstAttribute="leading" secondItem="qEV-gc-S2v" secondAttribute="trailing" constant="4" id="CRh-yz-c00"/>
+                <constraint firstItem="1QB-Zn-AOO" firstAttribute="centerX" secondItem="QRi-AC-Vd0" secondAttribute="centerX" id="FyS-Q2-w9t"/>
+                <constraint firstAttribute="trailing" secondItem="0AW-Nw-sdc" secondAttribute="trailing" constant="30" id="G0L-of-h1y"/>
+                <constraint firstItem="qEV-gc-S2v" firstAttribute="centerY" secondItem="1QB-Zn-AOO" secondAttribute="centerY" id="GXf-VG-Bqg"/>
+                <constraint firstItem="5O0-OZ-UnP" firstAttribute="top" secondItem="qEV-gc-S2v" secondAttribute="bottom" constant="14" id="H8d-SY-c8q"/>
+                <constraint firstItem="0AW-Nw-sdc" firstAttribute="centerY" secondItem="1QB-Zn-AOO" secondAttribute="centerY" id="Umx-bh-i3m"/>
+                <constraint firstItem="5O0-OZ-UnP" firstAttribute="leading" secondItem="QRi-AC-Vd0" secondAttribute="leading" constant="20" id="Ytq-DA-py6"/>
+                <constraint firstItem="1QB-Zn-AOO" firstAttribute="top" secondItem="QRi-AC-Vd0" secondAttribute="top" constant="13" id="hY3-8c-HX2"/>
+                <constraint firstItem="0AW-Nw-sdc" firstAttribute="leading" secondItem="1QB-Zn-AOO" secondAttribute="trailing" constant="5" id="tIr-fA-sCg"/>
+                <constraint firstItem="qEV-gc-S2v" firstAttribute="leading" secondItem="QRi-AC-Vd0" secondAttribute="leading" constant="30" id="wCF-AV-nm2"/>
+            </constraints>
+            <point key="canvasLocation" x="373.5" y="545"/>
+        </collectionReusableView>
+    </objects>
+    <resources>
+        <image name="img_busgold" width="110" height="110"/>
+    </resources>
+</document>

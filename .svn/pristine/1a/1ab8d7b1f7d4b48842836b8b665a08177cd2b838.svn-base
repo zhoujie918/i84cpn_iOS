@@ -1,0 +1,150 @@
+//
+//  CPSignUpViewController.swift
+//  i84cpn
+//
+//  Created by BenjaminRichard on 16/5/6.
+//  Copyright © 2016年 5i84. All rights reserved.
+//
+
+import UIKit
+
+class CPSignUpViewController: UIViewController {
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        self.title = "新用户注册"
+        self.view.addSubview(signUpView)
+    }
+
+    override func viewWillAppear(animated: Bool) {
+        super.viewWillAppear(animated)
+        signUpView.frame = view.frame
+        
+    }
+    
+    override func viewDidAppear(animated: Bool) {
+        super.viewDidAppear(animated)
+        signUpView.verifyCodeButton.addTarget(self, action: #selector(verifyCodeReload), forControlEvents: .TouchUpInside)
+        signUpView.SMSButton.addTarget(self, action: #selector(getSMSCode), forControlEvents: .TouchUpInside)
+        signUpView.showPasswordButton.addTarget(self, action: #selector(passwordShow), forControlEvents: .TouchUpInside)
+        signUpView.signUpButton.addTarget(self, action: #selector(signUp), forControlEvents: .TouchUpInside)
+    }
+    
+    override func didReceiveMemoryWarning() {
+        super.didReceiveMemoryWarning()
+        // Dispose of any resources that can be recreated.
+    }
+
+    //MARK: -- 事件响应方法
+    func verifyCodeReload(button: UIButton) {
+        signUpView.setVerifyCodeImage()
+    }
+    
+    
+    // 获取短信验证码
+    func getSMSCode(button: UIButton) {
+        let phoneNum: String = signUpView.phoneNumTextField.text!
+        let verityCode: String = signUpView.verifyCodeTextField.text!
+        
+        // 获取短信验证码
+        if phoneNum.characters.count != 11 {
+            signUpView.tipLabel.hidden = false
+        } else {
+            signUpView.tipLabel.hidden = true
+            if verityCode.characters.count == 0 {
+                alertView = UIAlertView(title: "提示", message: "请输入图形验证码", delegate: self, cancelButtonTitle: "确定")
+                alertView!.show()
+            } else {
+                CPAFHTTPSessionManager.postWithUrlString(Constants.getSMSCodeURL, parameter: Constants.getSMSCodeParamWithCaptcha(verityCode, mobile: phoneNum), progressBlock: { (progress) in
+                    }, successBlock: { (respondData) in
+                        
+                        let dic: NSDictionary = respondData as! NSDictionary
+                        let rsp: Bool = dic["success"] as! Bool
+                        if rsp {
+                            let objData = dic["result"]
+                            let suc: Bool = objData!["success"] as! Bool
+                            var msg: String?
+                            if suc {
+                                let str: String = "您的验证码为："
+                                msg = str.stringByAppendingString((objData!["regCode"] as? String)!)
+                            } else {
+                                msg = objData!["msg"] as? String
+                            }
+                            
+                            self.alertView = UIAlertView(title: "提示", message: msg, delegate: self, cancelButtonTitle: "确定")
+                            self.alertView?.show()
+                        }
+                        
+                    }, failureBlock: { (error) in
+                        print(error)
+                })
+            }
+        }
+    }
+    
+    func passwordShow(button: UIButton) {
+        if showPassword {
+            showPassword = false
+            signUpView.showPasswordButton.setImage(UIImage(named: "icon_close"), forState: .Normal)
+        } else {
+            showPassword = true
+            signUpView.showPasswordButton.setImage(UIImage(named: "icon_open"), forState: .Normal)
+        }
+        signUpView.passwordTextField.secureTextEntry = !showPassword
+    }
+    
+    // 注册
+    func signUp(button: UIButton) {
+        let phoneNum: String = signUpView.phoneNumTextField.text!
+        let verityCode: String = signUpView.verifyCodeTextField.text!
+        let SMSCode: String = signUpView.SMSTextField.text!
+        let password: String = signUpView.passwordTextField.text!
+        
+        if phoneNum.characters.count != 11 {
+            signUpView.tipLabel.hidden = false
+        } else {
+            signUpView.tipLabel.hidden = true
+            if verityCode.characters.count == 0 {
+                alertView = UIAlertView(title: "提示", message: "请输入图形验证码", delegate: self, cancelButtonTitle: "确定")
+                alertView!.show()
+            } else if SMSCode.characters.count == 0 {
+                alertView = UIAlertView(title: "提示", message: "请输入短信验证码", delegate: self, cancelButtonTitle: "确定")
+                alertView!.show()
+            } else if password.characters.count < 6 {
+                alertView = UIAlertView(title: "提示", message: "请输入6位以上的密码", delegate: self, cancelButtonTitle: "确定")
+                alertView!.show()
+            } else {
+                CPAFHTTPSessionManager.postWithUrlString(Constants.registerURL, parameter: Constants.getRegisterParamWithPhoneNum(phoneNum, regcode: SMSCode, password: password), progressBlock: nil, successBlock: { (respondData) in
+                        let dic:NSDictionary = respondData as! NSDictionary
+                        let rsp: Bool = dic["success"] as! Bool
+                        if rsp {
+                            let objData = dic["result"]
+                            let suc: Bool = objData!["success"] as! Bool
+                            
+                            if suc {
+                                self.alertView = UIAlertView(title: "提示", message: "注册成功", delegate: self, cancelButtonTitle: "确定")
+                                self.alertView?.show()
+                                self.navigationController?.popViewControllerAnimated(true)
+                            } else {
+                                self.signUpView.setVerifyCodeImage()
+                                let msg: String = objData!["msg"] as! String
+                                self.alertView = UIAlertView(title: "提示", message: msg, delegate: self, cancelButtonTitle: "确定")
+                                self.alertView?.show()
+                            }
+                        }
+                    }, failureBlock: { (error) in
+                        print(error)
+                })
+            }
+        }
+        
+    }
+
+    //MARK: -- 代理方法
+    
+    //MARK: -- 属性
+    let signUpView: CPSignUpView = CPSignUpView()
+    var alertView: UIAlertView?
+    var showPassword: Bool = false
+    
+}

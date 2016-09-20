@@ -1,0 +1,216 @@
+//
+//  CPAddressManangeViewController.swift
+//  i84cpn
+//  地址管理
+//  Created by BenjaminRichard on 16/5/13.
+//  Copyright © 2016年 5i84. All rights reserved.
+//
+
+import UIKit
+
+class CPAddAddressViewController: CMBaseViewController, UITextViewDelegate, UIPickerViewDataSource, UIPickerViewDelegate, AreaDataModelDelegate {
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        title = "通讯地址管理"
+        view.addSubview(addAddressView)
+//        if hideNavi == true {
+//            addAddressView.frame = CGRectMake(0, 64, SCREEN_WIDTH, SCREEN_HEIGHT)
+//        }else{
+            addAddressView.frame = view.frame
+//        }
+//        let backBtn = UIBarButtonItem.init(image: UIImage(named: "icon_back"), style: UIBarButtonItemStyle.Done, target: self, action: #selector(popView))
+//        self.navigationItem.leftBarButtonItem = backBtn
+        
+        selectAreaView.frame = view.frame
+    }
+
+    override func viewWillAppear(animated: Bool) {
+        super.viewWillAppear(animated)
+    }
+    
+    override func viewDidAppear(animated: Bool) {
+        super.viewDidAppear(animated)
+        addAddressView.addressButton.addTarget(self, action: #selector(selectArea), forControlEvents: .TouchUpInside )
+        addAddressView.addressTipButton.addTarget(self, action: #selector(hideTextViewPlaceHolder), forControlEvents: .TouchUpInside)
+        addAddressView.saveButton.addTarget(self, action: #selector(save), forControlEvents: .TouchUpInside)
+        addAddressView.defaultAddressButton.addTarget(self, action: #selector(setDefault), forControlEvents: .TouchUpInside)
+        
+        selectAreaView.cancelButton.addTarget(self, action: #selector(cancel), forControlEvents: .TouchUpInside)
+        selectAreaView.OKButton.addTarget(self, action: #selector(selected), forControlEvents: .TouchUpInside)
+        
+        areaDataModel.delegate = self
+        addAddressView.addressTextView.delegate = self
+        selectAreaView.areaPickerView.dataSource = self
+        selectAreaView.areaPickerView.delegate = self
+    }
+    
+    // MARK: -- 事件响应
+    
+    // 添加地址界面按钮响应事件
+    func selectArea(button: UIButton) {
+        view.addSubview(selectAreaView)
+    }
+    // 隐藏提示按钮
+    func hideTextViewPlaceHolder(button: UIButton) {
+        if button.hidden == false {
+            button.hidden = true
+        }
+    }
+    
+    func setDefault(button: UIButton) {
+        if addAddressView.isDefault {
+            addAddressView.isDefault = false
+            addAddressView.defaultAddressButton.setImage(UIImage(named: "icon_unsel"), forState: .Normal)
+            addAddressView.defaultAddressLabel.textColor = Constants.paleWordColor
+        } else {
+            addAddressView.isDefault = true
+            addAddressView.defaultAddressButton.setImage(UIImage(named: "icon_sel"), forState: .Normal)
+            addAddressView.defaultAddressLabel.textColor = Constants.yellowWordColor
+        }
+    }
+    
+    func save(button: UIButton) {
+        if !addAddressView.getSelectedAreaStatus() {
+            let alertView = UIAlertView(title: "提示", message: "请先选择所在区域", delegate: self, cancelButtonTitle: "确定")
+            alertView.show()
+        } else if addAddressView.addressTextView.text == "" {
+            let alertView = UIAlertView(title: "提示", message: "请输入详细地址", delegate: self, cancelButtonTitle: "确定")
+            alertView.show()
+        } else {
+            let isDef = addAddressView.isDefault ? 1 : 0
+            CPAFHTTPSessionManager.postWithUrlString(Constants.userInfoURL, parameter: Constants.addAddress(isDef, provinceId: areaDataModel.getProvinceId(), cityId: areaDataModel.getCityId(), countyId: areaDataModel.getCountyId(), address: addAddressView.addressTextView.text), progressBlock: { (progress) in
+                
+                }, successBlock: { (respondData) in
+                    let dic:NSDictionary = respondData as! NSDictionary
+                    let rsp: Bool = dic["success"] as! Bool
+                    if rsp {
+                        let objData: NSDictionary = dic["result"] as! NSDictionary
+                        if objData.objectForKey("success") as! Bool {
+                            
+                            self.navigationController?.popViewControllerAnimated(true)
+                        } else {
+                            let msg = objData.objectForKey("msg") as! String
+                            let alertView = UIAlertView(title: "提示", message: msg, delegate: self, cancelButtonTitle: "确定")
+                            alertView.show()
+                        }
+                    } else {
+                        Constants.dPrint(dic)
+                    }
+                }, failureBlock: { (error) in
+                    print(error)
+            })
+        }
+    }
+    
+    // 地址选择器按钮响应事件
+    func cancel(button: UIButton) {
+        selectAreaView.removeFromSuperview()
+    }
+    
+    func selected(button: UIButton) {
+        addAddressView.addressButton.setTitle(areaDataModel.getAddress(), forState: .Normal)
+        addAddressView.addressButton.setTitleColor(Constants.blackWordColor, forState: .Normal)
+        addAddressView.setSelectedAreaStatus()
+        selectAreaView.removeFromSuperview()
+    }
+    
+    // delegate
+    func textViewShouldBeginEditing(textView: UITextView) -> Bool {
+        addAddressView.addressTipButton.hidden = true
+        return true
+    }
+    
+    func reloadData(type: Int) {
+        if type == 0 {
+            selectAreaView.areaPickerView.reloadComponent(1)
+        } else {
+            selectAreaView.areaPickerView.reloadComponent(2)
+        }
+        
+    }
+    
+    func pickerView(pickerView: UIPickerView, didSelectRow row: Int, inComponent component: Int) {
+        switch component {
+        case 0:
+            areaDataModel.provinceRow = row
+            areaDataModel.cityRow = 0
+            areaDataModel.countyRow = 0
+            areaDataModel.reloadDataByProvince(row)
+            pickerView.selectRow(0, inComponent: 1, animated: true)
+            pickerView.selectRow(0, inComponent: 2, animated: true)
+            changeComponent = 0
+        case 1:
+            areaDataModel.cityRow = row
+            areaDataModel.countyRow = 0
+            areaDataModel.reloadDataByCity(row)
+            pickerView.selectRow(0, inComponent: 2, animated: true)
+            changeComponent = 1
+        case 2:
+            areaDataModel.countyRow = row
+        default:
+            break
+        }
+    }
+    
+    func pickerView(pickerView: UIPickerView, viewForRow row: Int, forComponent component: Int, reusingView view: UIView?) -> UIView {
+        if (view != nil) {
+            label = view as? UILabel
+        } else {
+            label = UILabel()
+            label?.font = Constants.mediumFont
+            label?.textAlignment = NSTextAlignment.Center
+        }
+        
+        switch component {
+        case 0:
+            let provinceDic: Dictionary<String, String> = areaDataModel.getProvinceNameArray()[row] as! Dictionary<String, String>
+            label?.text = provinceDic["dictName"]
+        case 1:
+            if areaDataModel.getCityNameArray().count > row {
+                let provinceDic: Dictionary<String, String> = areaDataModel.getCityNameArray()[row] as! Dictionary<String, String>
+                label!.text = provinceDic["dictName"]
+            } else {
+                Constants.dPrint("cell  \(row)")
+                label?.text = String(row)
+            }
+        case 2:
+            if  areaDataModel.getCountyArray().count > row {
+                let provinceDic: Dictionary<String, String> = areaDataModel.getCountyArray()[row] as! Dictionary<String, String>
+                label!.text = provinceDic["dictName"]
+            }
+        default:
+            label!.text = ""
+        }
+        
+        return label!
+    }
+    
+    // datasource
+    func numberOfComponentsInPickerView(pickerView: UIPickerView) -> Int {
+        return 3
+    }
+    
+    func pickerView(pickerView: UIPickerView, numberOfRowsInComponent component: Int) -> Int {
+        switch component {
+        case 0:
+            return areaDataModel.getProvinceNameArray().count
+        case 1:
+            Constants.dPrint("count: \(areaDataModel.getCityNameArray().count)")
+            return areaDataModel.getCityNameArray().count
+        case 2:
+            return areaDataModel.getCountyArray().count
+        default:
+            return 1
+        }
+    }
+
+    
+    // 属性
+    var hideNavi = false
+    private let addAddressView = CPAddAddressView()
+    private let selectAreaView = CPSelectAreaView()
+    private let areaDataModel =  CPAreaDataModel()
+    private var changeComponent = 0
+    var label: UILabel?
+}

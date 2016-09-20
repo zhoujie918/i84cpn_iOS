@@ -1,0 +1,119 @@
+//
+//  CPLoginViewController.swift
+//  i84cpn
+//
+//  Created by BenjaminRichard on 16/5/6.
+//  Copyright © 2016年 5i84. All rights reserved.
+//
+
+import UIKit
+
+class CPLoginViewController: CMBaseViewController, SignUpDelegate {
+    
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        view.addSubview(loginView)
+        self.navigationController!.navigationBar.barTintColor = Constants.whiteBGColor
+        
+//        if hideNavi == true {
+//            loginView.frame = CGRectMake(0, 64, Constants.screenWidth, SCREEN_HEIGHT)
+//        }else{
+            loginView.frame = view.frame
+//        }
+        
+        
+        loginView.loginButton.addTarget(self, action: #selector(login), forControlEvents: .TouchUpInside)
+        loginView.signUpButton.addTarget(self, action: #selector(signUp), forControlEvents: .TouchUpInside)
+        loginView.forgetButton.addTarget(self, action: #selector(forgetPassword), forControlEvents: .TouchUpInside)
+    }
+    
+    override func viewWillAppear(animated: Bool) {
+        super.viewWillAppear(animated)
+    }
+    
+    override func viewDidAppear(animated: Bool) {
+        super.viewDidAppear(animated)
+        
+        
+    }
+
+    
+// MARK: -- 事件响应方法
+    
+    func login(button: UIButton) {
+        let phoneNum:String = loginView.phoneNumTextField.text!
+        let password:String = loginView.passwordTextField.text!
+        
+        if phoneNum.isEmpty || password.isEmpty {
+            loginView.tipLabel.hidden = false
+        } else {
+            if NSUserDefaults.standardUserDefaults().valueForKey("cityId") == nil {
+                NSUserDefaults.standardUserDefaults().setObject(350100, forKey: "cityId")
+                //设置同步
+                NSUserDefaults.standardUserDefaults().synchronize()
+            }
+
+            let cityId = NSUserDefaults.standardUserDefaults().valueForKey("cityId") as! Int
+            Constants.cityId = cityId
+            let param = Constants.loginParms(phoneNum, password: password, cityId: cityId)
+             let hub = MBProgressHUD.showHUDAddedTo(self.view, animated: true)
+            hub.labelText = "登录中..."
+            
+            CPAFHTTPSessionManager.postWithUrlString(Constants.loginURL , parameter: param, progressBlock: { (progress) in
+                
+                }, successBlock: { (respondData) in
+                    let dic:NSDictionary = respondData as! NSDictionary
+                    let success: Bool = dic["success"] as! Bool
+                    if success == true {
+                        self.navigationController?.popViewControllerAnimated(true)
+                        //设置存储信息
+                        NSUserDefaults.standardUserDefaults().setObject(phoneNum, forKey: "UserNameKey")
+                        NSUserDefaults.standardUserDefaults().setObject(password, forKey: "PwdKey")
+                        //设置同步
+                        NSUserDefaults.standardUserDefaults().synchronize()
+                        CPUserModel.login()
+                        CPUserModel.getUserInfo()
+                        SSKeychain.setPassword("", forService: Constants.keychainServerName, account: phoneNum)
+//                        CPUserModel.hasPaidOrder()
+                    } else {
+                        self.loginView.tipLabel.hidden = false
+                        if dic.objectForKey("msg") != nil {
+                            self.loginView.tipLabel.text = dic.objectForKey("msg") as? String
+                        }
+                    }
+                    hub.hide(true)
+                }, failureBlock: { (error) in
+                    hub.hide(true)
+                    let alertView = UIAlertView(title: "提示", message: "连接超时，请确认网络连接正常！", delegate: self, cancelButtonTitle: "确定")
+                    alertView.show()
+                    print(error)
+            })
+        }
+    }
+    
+    func signUp(button: UIButton) {
+        let vc: CPSignUpViewController = CPSignUpViewController()
+        self.hidesBottomBarWhenPushed=true
+        self.navigationController?.pushViewController(vc, animated: true)
+        vc.delegate = self
+    }
+    
+    func returnPhoneNum(phoneNum: String, pwd: String) {
+        loginView.phoneNumTextField.text = phoneNum
+        loginView.passwordTextField.text = pwd
+    }
+    
+    func forgetPassword(button:UIButton) {
+        let vc: CPRetrievePasswordViewController = CPRetrievePasswordViewController()
+        self.hidesBottomBarWhenPushed=true
+        self.navigationController?.pushViewController(vc, animated: true)
+    }
+    
+
+//MARK: --代理方法
+
+    
+//MARK: -- 属性
+    var hideNavi =  false
+    let loginView: CPLoginView = CPLoginView()
+}

@@ -1,0 +1,168 @@
+//
+//  CPUserCenterHomePageView.swift
+//  i84cpn
+//
+//  Created by BenjaminRichard on 16/5/9.
+//  Copyright © 2016年 5i84. All rights reserved.
+//
+
+import UIKit
+
+class CPUserCenterHomePageView: UIView {
+
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        headContainView.addSubview(headViewBGButton)
+        headContainView.addSubview(headView)
+        headContainView.addSubview(userNameLabel)
+        headContainView.addSubview(cerView)
+        headContainView.addSubview(personInfomationButton)
+        tableView.tableHeaderView = headContainView
+        
+        footerContainView.addSubview(quitButton)
+        tableView.tableFooterView = footerContainView
+        
+        self.addSubview(tableView)
+        self.backgroundColor = Constants.whiteBGColor
+    }
+    
+    required init?(coder aDecoder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    func reloadData() {
+        if CPUserModel.imageName != nil {
+            CPAFHTTPSessionManager.getWithUrlString(Constants.getImageURL, parameter: Constants.getImageWithImageName(CPUserModel.imageName!), progressBlock: { (progress) in
+                
+                }, successBlock: { (respondData) in
+                    let img = UIImage(data: respondData as! NSData)
+                    self.headView.image = img
+                }, failureBlock: { (error) in
+                    print(error)
+            })
+        } else {
+            headView.image = UIImage(named: "img_default")
+        }
+        
+        if CPUserModel.realName != nil {
+            userNameLabel.text = CPUserModel.realName
+            cerView.image = UIImage(named: "img_adopt")
+        } else {
+            userNameLabel.text = "这里是用户名"
+        }
+        
+        if NSUserDefaults.standardUserDefaults().valueForKey("defaultCityIndex") != nil {
+            let city = NSUserDefaults.standardUserDefaults().valueForKey("defaultCityName") as! String
+        }
+    }
+    
+    override func layoutSubviews() {
+        tableView.snp_makeConstraints { (make) in
+            make.top.equalTo(self)
+            make.right.equalTo(self)
+            make.left.equalTo(self)
+            make.bottom.equalTo(self)
+        }
+        
+        headContainView.frame = CGRectMake(0, 0, Constants.screenWidth, 130)
+        
+        headViewBGButton.snp_makeConstraints { (make) in
+            make.left.right.equalTo(headContainView)
+            make.top.equalTo(headContainView.snp_top)
+            make.height.equalTo(headContainView.snp_height)
+        }
+        
+        headView.snp_makeConstraints { (make) in
+            make.left.equalTo(headViewBGButton.snp_left).offset(25)
+            make.top.equalTo(headViewBGButton.snp_top).offset(15)
+            make.width.height.equalTo(100)
+        }
+        
+        userNameLabel.snp_makeConstraints { (make) in
+            make.left.equalTo(headView.snp_right).offset(30)
+            make.top.equalTo(headViewBGButton.snp_top).offset(45)
+        }
+        
+        cerView.snp_makeConstraints { (make) in
+            make.left.equalTo(userNameLabel)
+            make.top.equalTo(userNameLabel.snp_bottom).offset(5)
+            make.height.equalTo(20)
+            make.width.equalTo(70)
+        }
+        
+        personInfomationButton.snp_makeConstraints { (make) in
+            make.centerY.equalTo(headViewBGButton)
+            make.right.equalTo(-20)
+            make.width.height.equalTo(40)
+        }
+        
+        footerContainView.frame = CGRectMake(0, 0, Constants.screenWidth, 100)
+        
+        quitButton.snp_makeConstraints { (make) in
+            make.left.equalTo(footerContainView).offset(30)
+            make.top.equalTo(footerContainView).offset(30)
+            make.bottom.equalTo(footerContainView).offset(-30)
+            make.width.equalTo(Constants.screenWidth - 60)
+        }
+    }
+    
+    // 头部
+    let headContainView: UIView = UIView()
+    
+    let headViewBGButton: UIButton = {
+        let view = UIButton()
+        view.setBackgroundImage(UIImage(named: "img_bg"), forState: .Normal)
+        return view
+    } ()
+    
+    let headView:UIImageView = {
+        let view: UIImageView = UIImageView(image: UIImage(named: "img_default"))
+        view.layer.cornerRadius = 100 * 0.5;
+        view.layer.masksToBounds = true;
+        return view
+    } ()
+    
+    let userNameLabel: UILabel = {
+        let label: UILabel = UILabel()
+        label.text = "这里是用户名"
+        label.textColor = Constants.paleWordColor
+        return label
+    } ()
+    
+    let cerView: UIImageView = {
+        let view: UIImageView = UIImageView(image: UIImage(named: "img_adopt"))
+        return view
+    } ()
+    
+    let personInfomationButton: UIButton = {
+        let btn: UIButton = UIButton()
+        btn.setImage(UIImage(named: "icon_in01"), forState: .Normal)
+        btn.setImage(UIImage(named: "icon_in02"), forState: .Highlighted)
+        return btn
+    } ()
+    
+    // 表
+    let tableView: UITableView = {
+        let view: UITableView = UITableView(frame: CGRectMake(0, 0, 0, 0), style: .Grouped)
+        view.contentInset = UIEdgeInsetsMake(28, 0, 80, 0)
+        view.backgroundColor = Constants.paleBGColor
+        view.showsVerticalScrollIndicator = false
+        return view
+    } ()
+
+    // 尾部
+    let footerContainView: UIView = {
+        let view: UIView = UIView()
+        return view
+    } ()
+    
+    let quitButton: UIButton = {
+        let btn: UIButton = UIButton()
+        btn.setTitle("退出登录", forState: .Normal)
+        btn.tintColor = Constants.whiteWordColor
+        btn.layer.cornerRadius = 16
+        btn.hidden = true
+        btn.setBackgroundImage(UIImage(named: "btn_login_nor"), forState: .Normal)
+        return btn
+    } ()
+}

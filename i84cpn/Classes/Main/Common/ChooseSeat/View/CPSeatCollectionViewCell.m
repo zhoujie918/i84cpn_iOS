@@ -1,0 +1,40 @@
+//
+//  CPSeatCollectionViewCell.m
+//  i84cpn
+//
+//  Created by 爱巴士-余夏伟 on 16/5/28.
+//  Copyright © 2016年 5i84. All rights reserved.
+//
+
+#import "CPSeatCollectionViewCell.h"
+
+@implementation CPSeatCollectionViewCell
+
+- (void)awakeFromNib {
+    [super awakeFromNib];
+    // Initialization code
+}
+
+
+-(void)setCellWithStatus:(int)status{
+    //0:过道  1:已被选   2:无效   3:可选
+    switch (status) {
+        case 0:
+            self.imageV.image = [UIImage imageNamed:@"line_32px"];
+            break;
+        case 1:
+            self.imageV.image = [UIImage imageNamed:@"pic_sold"];
+            break;
+        case 2:
+            self.imageV.image = nil;//[UIImage imageNamed:@"icon_close1"];
+            break;
+        case 3:
+            self.imageV.image = [UIImage imageNamed:@"pic_choose"];
+            break;
+            
+        default:
+            break;
+    }
+}
+
+@end

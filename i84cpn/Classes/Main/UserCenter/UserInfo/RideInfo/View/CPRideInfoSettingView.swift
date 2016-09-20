@@ -1,0 +1,154 @@
+//
+//  CPRideInfoSettingView.swift
+//  i84cpn
+//
+//  Created by BenjaminRichard on 16/5/18.
+//  Copyright © 2016年 5i84. All rights reserved.
+//
+
+import UIKit
+
+class CPRideInfoSettingView: UIView {
+
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        self.backgroundColor = Constants.paleBGColor
+        
+        containView1.addSubview(receiveRideInfoMessageLabel)
+        containView1.addSubview(receiveRideInfoMessageSwitch)
+        
+        self.addSubview(containView1)
+//        self.addSubview(soundSettingTipLabel)
+//        
+//        containView2.addSubview(soundAlarmLabel)
+//        containView2.addSubview(soundAlarmSwitch)
+//        containView2.addSubview(line)
+//        containView2.addSubview(vibrationAlarmLabel)
+//        containView2.addSubview(vibrationAlarmSwitch)
+//        
+//        self.addSubview(containView2)
+        self.addSubview(fuctureTipLabel)
+        
+        containView3.addSubview(SMSPushLabel)
+        containView3.addSubview(SMSPushSwitch)
+        
+        self.addSubview(containView3)
+    }
+    
+    required init?(coder aDecoder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    override func layoutSubviews() {
+        containView1.snp_makeConstraints { (make) in
+            make.top.equalTo(20)
+            make.left.right.equalTo(0)
+            make.bottom.equalTo(receiveRideInfoMessageLabel.snp_bottom).offset(topOffset)
+        }
+        
+        receiveRideInfoMessageLabel.snp_makeConstraints { (make) in
+            make.left.equalTo(20)
+            make.top.equalTo(topOffset)
+            make.right.equalTo(receiveRideInfoMessageSwitch.snp_left).offset(-20)
+        }
+        
+        receiveRideInfoMessageSwitch.snp_makeConstraints { (make) in
+            make.centerY.equalTo(receiveRideInfoMessageLabel)
+            make.right.equalTo(-20)
+        }
+        
+        fuctureTipLabel.snp_makeConstraints { (make) in
+            make.left.equalTo(receiveRideInfoMessageLabel)
+            make.top.equalTo(containView1.snp_bottom).offset(topOffset)
+        }
+        
+        containView3.snp_makeConstraints { (make) in
+            make.left.right.equalTo(0)
+            make.top.equalTo(fuctureTipLabel.snp_bottom).offset(10)
+            make.bottom.equalTo(SMSPushLabel.snp_bottom).offset(topOffset)
+        }
+        
+        SMSPushLabel.snp_makeConstraints { (make) in
+            make.left.equalTo(receiveRideInfoMessageLabel)
+            make.top.equalTo(containView3).offset(topOffset)
+        }
+        
+        SMSPushSwitch.snp_makeConstraints { (make) in
+            make.right.equalTo(receiveRideInfoMessageSwitch)
+            make.centerY.equalTo(SMSPushLabel)
+        }
+    }
+    
+    private let topOffset = 20
+    
+    private let containView1 = Constants.containView()
+    private let receiveRideInfoMessageLabel: UILabel = {
+        let view = UILabel()
+        view.text = "接收乘车信息"
+        view.font = Constants.mediumFont
+        return view
+    } ()
+    let receiveRideInfoMessageSwitch: UISwitch = {
+        let view = UISwitch()
+        view.onTintColor = Constants.yellowWordColor
+        view.on = true
+        return view
+    } ()
+//    
+//    private let soundSettingTipLabel: UILabel = {
+//        let view = UILabel()
+//        view.text = "提示音效"
+//        view.font = Constants.mediumFont
+//        view.textColor = Constants.paleWordColor
+//        return view
+//    } ()
+//    private let containView2 = Constants.containView()
+//    private let soundAlarmLabel: UILabel = {
+//        let view = UILabel()
+//        view.text = "铃声提示"
+//        view.font = Constants.mediumFont
+//        return view
+//    } ()
+//    let soundAlarmSwitch: UISwitch = {
+//        let view = UISwitch()
+//        view.onTintColor = Constants.yellowWordColor
+//        view.on = true
+//        return view
+//    } ()
+//    private let line = Constants.splitLine()
+//    private let vibrationAlarmLabel: UILabel = {
+//        let view = UILabel()
+//        view.font = Constants.mediumFont
+//        view.text = "振动提示"
+//        return view
+//    } ()
+//    let vibrationAlarmSwitch: UISwitch = {
+//        let view = UISwitch()
+//        view.onTintColor = Constants.yellowWordColor
+//        view.on = true
+//        return view
+//    } ()
+    
+    private let fuctureTipLabel: UILabel = {
+        let view = UILabel()
+        view.text = "敬请期待"
+        view.font = Constants.mediumFont
+        view.textColor = Constants.paleWordColor
+        return view
+    } ()
+    private let containView3 = Constants.containView()
+    private let SMSPushLabel: UILabel = {
+        let view = UILabel()
+        view.text = "短信推送"
+        view.font = Constants.mediumFont
+        return view
+    } ()
+    
+    let SMSPushSwitch: UISwitch = {
+        let view = UISwitch()
+        view.onTintColor = Constants.yellowWordColor
+        view.on = false
+        view.enabled = false
+        return view
+    } ()
+}

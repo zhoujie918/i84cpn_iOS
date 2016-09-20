@@ -1,0 +1,121 @@
+//
+//  CPAbout5i84View.swift
+//  i84cpn
+//
+//  Created by BenjaminRichard on 16/5/19.
+//  Copyright © 2016年 5i84. All rights reserved.
+//
+
+import UIKit
+
+class CPAbout5i84View: UIView {
+
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        self.backgroundColor = Constants.paleBGColor
+        self.addSubview(scrollView)
+        
+        scrollView.addSubview(imageView)
+        scrollView.addSubview(versionLabel)
+        scrollView.addSubview(containView)
+        containView.addSubview(titleLabel)
+        containView.addSubview(line)
+        containView.addSubview(detailLabel)
+    }
+    
+    required init?(coder aDecoder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    override func layoutSubviews() {
+        scrollView.frame = self.frame
+        
+        imageView.snp_makeConstraints { (make) in
+            make.top.equalTo(100)
+            make.centerX.equalTo(self)
+        }
+        
+        versionLabel.snp_makeConstraints { (make) in
+            make.left.equalTo(imageView)
+            make.top.equalTo(imageView.snp_bottom).offset(15)
+        }
+        
+        containView.snp_makeConstraints { (make) in
+            make.left.right.equalTo(0)
+            make.width.equalTo(Constants.screenWidth)
+            make.top.equalTo(versionLabel.snp_bottom).offset(30)
+            make.bottom.equalTo(detailLabel.snp_bottom).offset(30)
+        }
+        
+        titleLabel.snp_makeConstraints { (make) in
+            make.top.equalTo(20)
+            make.left.right.equalTo(0)
+            make.right.equalTo(0)
+        }
+        
+        line.snp_makeConstraints { (make) in
+            make.left.equalTo(20)
+            make.right.equalTo(-20)
+            make.top.equalTo(titleLabel.snp_bottom).offset(20)
+            make.height.equalTo(1)
+        }
+        
+        detailLabel.snp_makeConstraints { (make) in
+            make.left.equalTo(15)
+            make.width.equalTo(Constants.screenWidth - 15 * 2)
+            make.top.equalTo(line).offset(20)
+        }
+        
+        scrollView.contentSize = CGSizeMake(Constants.screenWidth, containView.frame.height + containView.frame.origin.y + 30)
+    }
+    
+    private let imageView: UIImageView = {
+        let view = UIImageView()
+        view.image = UIImage(named: "img_loading")
+        return view
+    } ()
+    
+    private let versionLabel: UILabel = {
+        let view = UILabel()
+        view.text = "同学号 v1.0"
+        view.textColor = Constants.paleWordColor
+        return view
+    } ()
+    
+    let scrollView: UIScrollView = {
+        let view: UIScrollView = UIScrollView()
+        view.showsVerticalScrollIndicator = false
+        view.showsHorizontalScrollIndicator = false
+        view.scrollEnabled = true
+        return view
+    } ()
+    
+    private let containView = Constants.containView()
+    
+    private let titleLabel: UILabel = {
+        let view = UILabel()
+        view.text = "全国首创：深度定制化公交电商平台"
+        view.textAlignment = NSTextAlignment.Center
+        return view
+    } ()
+    
+    private let line = Constants.splitLine()
+    
+    private let detailLabel: UILabel = {
+        let view = UILabel()
+        view.numberOfLines = 0
+        
+        var text:NSMutableAttributedString = NSMutableAttributedString(string: "“5i84”是由爱巴士网络科技有限公司独家研发的全国首个个性化定制电子商务平台。\n“5i84”凭借国内主流定制巴士平台与各地区优秀的客运企业形成战略合作，利用互联网先进技术，采取“线上征集、线下体验”的O2O运营模式，提供更多满足中国不同群体不同的出行方式。每一位平台用户皆可参与线路的线上征集、预订并在线下出行中体验5i84的个性化、专业化乘车服务。")
+        
+        text.addAttributes([NSForegroundColorAttributeName: Constants.paleWordColor], range: NSMakeRange(0, text.length))
+        //设置缩进、行距
+        let style = NSMutableParagraphStyle()
+        style.headIndent = 0;//缩进
+        style.firstLineHeadIndent = 20;
+        style.lineSpacing = 12;//行距
+        text.addAttributes([NSParagraphStyleAttributeName: style], range: NSMakeRange(0, text.length))
+        
+        view.attributedText = text
+        return view
+    } ()
+}

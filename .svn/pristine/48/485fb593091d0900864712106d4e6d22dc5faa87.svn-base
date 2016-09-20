@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="10117" systemVersion="15F34" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES">
+    <dependencies>
+        <deployment identifier="iOS"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="10117"/>
+        <capability name="Aspect ratio constraints" minToolsVersion="5.1"/>
+    </dependencies>
+    <objects>
+        <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner" customClass="NWCalendarView" customModule="i84cpn" customModuleProvider="target"/>
+        <placeholder placeholderIdentifier="IBFirstResponder" id="-2" customClass="UIResponder"/>
+        <view contentMode="scaleToFill" id="vNm-Yk-42F" customClass="CPLineInfoView" customModule="i84cpn" customModuleProvider="target">
+            <rect key="frame" x="0.0" y="0.0" width="600" height="600"/>
+            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+            <subviews>
+                <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="Qwb-Ae-Ant" customClass="NWCalendarView" customModule="i84cpn" customModuleProvider="target">
+                    <rect key="frame" x="138" y="137" width="325" height="325"/>
+                    <color key="backgroundColor" white="0.66666666666666663" alpha="1" colorSpace="calibratedWhite"/>
+                    <constraints>
+                        <constraint firstAttribute="width" secondItem="Qwb-Ae-Ant" secondAttribute="height" multiplier="1:1" id="6HW-Ct-p31"/>
+                        <constraint firstAttribute="height" constant="325" id="Ap5-eo-bJ3"/>
+                        <constraint firstAttribute="height" constant="325" id="EwW-Q2-E6f"/>
+                        <constraint firstAttribute="width" constant="325" id="wMv-lh-UTf"/>
+                    </constraints>
+                    <variation key="default">
+                        <mask key="constraints">
+                            <exclude reference="Ap5-eo-bJ3"/>
+                            <exclude reference="wMv-lh-UTf"/>
+                        </mask>
+                    </variation>
+                </view>
+            </subviews>
+            <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+            <constraints>
+                <constraint firstItem="Qwb-Ae-Ant" firstAttribute="centerY" secondItem="vNm-Yk-42F" secondAttribute="centerY" id="RCe-bR-Z1o"/>
+                <constraint firstItem="Qwb-Ae-Ant" firstAttribute="centerX" secondItem="vNm-Yk-42F" secondAttribute="centerX" id="ZHM-BO-eqP"/>
+            </constraints>
+            <connections>
+                <outlet property="calendarView" destination="Qwb-Ae-Ant" id="feb-hK-rY2"/>
+            </connections>
+            <point key="canvasLocation" x="839" y="251"/>
+        </view>
+    </objects>
+</document>

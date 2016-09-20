@@ -1,0 +1,53 @@
+//
+//  CPSuggestionsTableViewCell.swift
+//  i84cpn
+//
+//  Created by BenjaminRichard on 16/5/20.
+//  Copyright © 2016年 5i84. All rights reserved.
+//
+
+import UIKit
+
+class CPSuggestionsTableViewCell: UITableViewCell {
+
+    required init(coder aDecoder: NSCoder) {
+        super.init(coder: aDecoder)!
+    }
+    override init(style: UITableViewCellStyle, reuseIdentifier: String?) {
+        super.init(style: style, reuseIdentifier: reuseIdentifier)
+        
+        self.addSubview(titleLabel)
+        self.addSubview(line)
+        self.addSubview(detailLabel)
+    }
+    
+    override func layoutSubviews() {
+        titleLabel.snp_makeConstraints { (make) in
+            make.left.top.right.equalTo(20)
+        }
+        
+        line.snp_makeConstraints { (make) in
+            make.left.right.equalTo(titleLabel)
+            make.top.equalTo(titleLabel.snp_bottom).offset(10)
+            make.height.equalTo(1)
+        }
+        
+        detailLabel.snp_makeConstraints { (make) in
+            make.left.right.equalTo(titleLabel)
+            make.top.equalTo(line).offset(15)
+        }
+    }
+
+    let titleLabel: UILabel = {
+        let view = UILabel()
+        view.numberOfLines = 0
+        return view
+    } ()
+    private let line = Constants.splitLine()
+    let detailLabel: UILabel = {
+        let view = UILabel()
+        view.numberOfLines = 0
+        view.textColor = Constants.paleWordColor
+        return view
+    } ()
+}

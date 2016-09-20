@@ -1,0 +1,54 @@
+//
+//  CPMessageRemingDetailViewController.swift
+//  i84cpn
+//
+//  Created by BenjaminRichard on 16/6/13.
+//  Copyright © 2016年 5i84. All rights reserved.
+//
+
+import UIKit
+
+class CPMessageRemindingDetailViewController: CMBaseViewController {
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        title = "消息提醒"
+        
+        self.view.addSubview(detailView)
+        detailView.frame = view.frame
+    }
+    
+    override func viewWillAppear(animated: Bool) {
+        super.viewWillAppear(animated)
+        loadData()
+    }
+    
+    override func viewDidAppear(animated: Bool) {
+        super.viewDidAppear(animated)
+    }
+    
+    func loadData() {
+        CPAFHTTPSessionManager.postWithUrlString(Constants.userInfoURL, parameter: Constants.getMsgRemindingDetailContentWithCmrId(cmrId, msgType: msgType), progressBlock: { (progress) in
+            
+            }, successBlock: { (respondData) in
+                let dic:NSDictionary = respondData as! NSDictionary
+                let rsp: Bool = dic["success"] as! Bool
+                if rsp {
+                    let objData: NSDictionary = dic["result"] as! NSDictionary
+                    if objData.objectForKey("success")  as! Bool {
+                        let content = objData.objectForKey("content") == nil ? "" : objData.objectForKey("content") as! String
+                        self.detailView.loadData("", content: content)
+                    } else {
+                        let alertView = UIAlertView(title: "提示", message: objData.objectForKey("msg") as? String, delegate:  self, cancelButtonTitle: "确定")
+                        alertView.show()
+                    }
+                }
+            }, failureBlock: { (error) in
+                print(error)
+        })
+    }
+    
+    var cmrId = 0
+    var msgType = 0
+    private let detailView = CPMessageRemindingDetailView()
+}

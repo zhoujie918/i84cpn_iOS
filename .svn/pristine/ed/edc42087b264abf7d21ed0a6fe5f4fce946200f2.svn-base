@@ -1,0 +1,62 @@
+//
+//  PrefixHeader.pch
+//  i84cpn
+//
+//  Created by 爱巴士-余夏伟 on 16/5/6.
+//  Copyright © 2016年 5i84. All rights reserved.
+//
+
+#ifndef PrefixHeader_pch
+#define PrefixHeader_pch
+
+// Include any system framework and library headers here that should be included in all compilation units.
+// You will also need to set the Prefix Header build setting of one or more of your targets to reference this file.
+
+//---------------Swift 桥接-----------------
+#import <BaiduMapAPI_Base/BMKBaseComponent.h>//引入base相关所有的头文件
+#import <BaiduMapAPI_Map/BMKMapComponent.h>//引入地图功能所有的头文件
+#import <BaiduMapAPI_Search/BMKSearchComponent.h>//引入检索功能所有的头文件
+#import <BaiduMapAPI_Cloud/BMKCloudSearchComponent.h>//引入云检索功能所有的头文件
+#import <BaiduMapAPI_Location/BMKLocationComponent.h>//引入定位功能所有的头文件
+#import <BaiduMapAPI_Utils/BMKUtilsComponent.h>//引入计算工具所有的头文件
+#import <BaiduMapAPI_Radar/BMKRadarComponent.h>//引入周边雷达功能所有的头文件
+
+#import "CPBaseController.h"
+#import "Masonry.h"
+#import "AFNetworking.h"
+#import "URLHeader.h"
+#import "HttpTool.h"
+#import "TAPageControl.h"
+#import "KeyboardManager.h"
+#import "MBProgressHUD.h"
+#import "CPAFHTTPSessionManager.h"
+#import "UIImageView+WebCache.h"
+#import "UIButton+WebCache.h"
+#import "CPAlipayModel.h"   //支付宝
+#import "CPPayResultController.h"   //付款成功结果界面
+#import "CPPayFailResultController.h"   //付款失败结果界面
+#import "CPChooseSeatController.h"  //选座
+
+//--------------屏幕尺寸---------------
+#define SCREEN_WIDTH [UIScreen mainScreen].bounds.size.width
+#define SCREEN_HEIGHT [UIScreen mainScreen].bounds.size.height
+#define SCALE_WIDTH [UIScreen mainScreen].bounds.size.width/375
+#define SCALE_HEIGHT [UIScreen mainScreen].bounds.size.height/667
+
+
+
+//--------------颜色---------------
+#define COLOR_MAIN [UIColor colorWithRed:1.000 green:0.855 blue:0.165 alpha:1.000] //主色调
+#define COLOR_BACKGROUND_GRAY [UIColor colorWithWhite:0.941 alpha:1.000] //背景灰色
+#define COLOR_ASSISTANT [UIColor colorWithRed:0.345 green:0.251 blue:0.141 alpha:1.000] //辅助色
+#define COLOR_SEGMENTATION [UIColor colorWithWhite:0.898 alpha:1.000] //分割线
+#define COLOR_TEXT_TITLE [UIColor colorWithWhite:0.200 alpha:1.000] //标题
+#define COLOR_TEXT [UIColor colorWithWhite:0.400 alpha:1.000] //正文
+#define COLOR_TEXT_TIP [UIColor colorWithWhite:0.400 alpha:1.000] //提示
+#define COLOR_TEXT_YELLOW [UIColor colorWithRed:0.271 green:0.271 blue:0.310 alpha:1.000] //黄色字
+#define COLOR_TEXT_RED [UIColor colorWithRed:0.988 green:0.525 blue:0.388 alpha:1.000] //红色字
+#define COLOR_BUTTON_GREEN [UIColor colorWithRed:0.506 green:0.796 blue:0.306 alpha:1.000] //按钮绿色
+#define COLOR_BUTTON_BLUE [UIColor colorWithRed:0.416 green:0.753 blue:0.890 alpha:1.000] //按钮蓝色
+
+
+#endif /* PrefixHeader_pch */

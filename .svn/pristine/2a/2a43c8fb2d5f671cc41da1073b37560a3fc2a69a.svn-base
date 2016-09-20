@@ -1,0 +1,83 @@
+//
+//  CPSuggestionsViewController.swift
+//  i84cpn
+//
+//  Created by BenjaminRichard on 16/5/20.
+//  Copyright © 2016年 5i84. All rights reserved.
+//
+
+import UIKit
+
+class CPSuggestionsViewController: UIViewController, UITableViewDataSource, UITableViewDelegate {
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        title = "意见反馈"
+        view.addSubview(suggestionsView)
+        
+        suggestionsView.tableView.dataSource = self
+        suggestionsView.tableView.delegate = self
+    }
+    
+    override func viewWillAppear(animated: Bool) {
+        super.viewWillAppear(animated)
+        suggestionsView.frame = view.frame
+        
+        suggestionModel.getLineList()
+        CPPhotoCollectionViewCell.resetCount() // 用于下个页面图片个数重置
+    }
+    
+    override func viewDidAppear(animated: Bool) {
+        super.viewDidAppear(animated)
+//        suggestionsView.tableView.registerClass(CPSuggestionsTableViewCell.self, forCellReuseIdentifier: cellId)
+        suggestionsView.tableView.registerNib(UINib(nibName: "CPSuggesstionsTableViewCell", bundle: nil), forCellReuseIdentifier: cellId)
+        suggestionsView.tableView.reloadData()
+        
+        suggestionsView.button.addTarget(self, action: #selector(newSuggestions), forControlEvents: .TouchUpInside)
+    }
+    
+
+    // 事件响应
+    func newSuggestions(button: UIButton) {
+        let vc = CPNewSuggestionViewController()
+        self.hidesBottomBarWhenPushed=true
+        self.navigationController?.pushViewController(vc, animated: true)
+//        print(suggestionModel.sugesstionsList![0].category)
+    }
+    
+    // delegate
+
+    
+    // datasource
+    func numberOfSectionsInTableView(tableView: UITableView) -> Int {
+        return 1
+    }
+    
+    func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        if suggestionModel.sugesstionsList == nil {
+            return 0
+        }
+        return (suggestionModel.sugesstionsList?.count)!
+    }
+    
+    func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
+        cell = tableView.dequeueReusableCellWithIdentifier(cellId) as! CPSuggesstionsTableViewCell
+        cell.titleLabel.text = self.suggestionModel.sugesstionsList![indexPath.row].totalContent
+        
+        if self.suggestionModel.sugesstionsList![indexPath.row].imgs != nil && self.suggestionModel.sugesstionsList![indexPath.row].imgs?.count != 0 {
+            cell.setPhotoArray(self.suggestionModel.sugesstionsList![indexPath.row].imgs!)
+            cell.collectionViewHeight.constant = 55
+        } else {
+            cell.setPhotoArray(NSArray())
+            cell.collectionViewHeight.constant = 0
+        }
+        cell.collectionView.reloadData()    // 需要重新加载数据，否则会因为复用引起数据异常
+        cell.answerLabel.text = self.suggestionModel.sugesstionsList![indexPath.row].replyContent == "" ? "客服回复：我们将尽快答复您！" : self.suggestionModel.sugesstionsList![indexPath.row].replyContent
+        return cell
+    }
+    
+    private let suggestionModel = CPSuggestionsModel()
+    private let cellId = "suggestionsCell"
+    private var cell: CPSuggesstionsTableViewCell!
+    private let suggestionsView = CPSuggestionsView()
+}

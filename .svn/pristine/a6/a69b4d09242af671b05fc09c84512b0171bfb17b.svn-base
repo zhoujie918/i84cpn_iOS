@@ -1,0 +1,60 @@
+//
+//  CPAddressManagerView.swift
+//  i84cpn
+//  地址管理界面
+//  Created by BenjaminRichard on 16/5/16.
+//  Copyright © 2016年 5i84. All rights reserved.
+//
+
+import UIKit
+
+class CPAddressManagerView: UIView {
+
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        self.backgroundColor = Constants.paleBGColor
+        
+        self.addSubview(tableView)
+        self.addSubview(addAddressButton)
+    }
+    
+    required init?(coder aDecoder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+//    override func drawRect(rect: CGRect) {
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        tableView.snp_makeConstraints { (make) in
+            make.top.equalTo(20)
+            make.left.right.equalTo(0)
+            make.bottom.equalTo(addAddressButton.snp_top).offset(-30)
+        }
+        
+        addAddressButton.snp_makeConstraints { (make) in
+            make.left.equalTo(30)
+            make.right.equalTo(self).offset(-30)
+            make.bottom.equalTo(self).offset(-30)
+        }
+    }
+
+    // 属性
+    var defaultRow: Int = 0
+    
+    let tableView: UITableView = {
+        let view = UITableView()
+        view.backgroundColor = Constants.paleBGColor
+        view.separatorStyle = UITableViewCellSeparatorStyle.None
+        view.rowHeight = 85
+        view.contentInset = UIEdgeInsetsMake(0, 0, 0, 0)
+        return view
+    } ()
+    
+    let addAddressButton: UIButton = {
+        let view = UIButton()
+        view.setTitle("添加新地址", forState: .Normal)
+        view.setTitleColor(Constants.whiteWordColor, forState: .Normal)
+        view.setBackgroundImage(UIImage(named: "btn_login_nor"), forState: .Normal)
+        return view
+    } ()
+}
